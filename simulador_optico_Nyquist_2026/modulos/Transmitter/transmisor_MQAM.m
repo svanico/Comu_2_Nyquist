@@ -15,6 +15,7 @@ function [o_data_tx] = transmisor_MQAM(i_cfg_s)
     o_data_tx.ak = QAM_gen(M,Lsymbs);
     ak_ovs = oversampler(OVS,Lsymbs,o_data_tx.ak); 
     rrc = root_raised_cosine(BR,fs,rolloff,NTAPS,t0);
+    rrc = rrc ./ norm(rrc) * sqrt(OVS);
     o_tx = filter(rrc,1,[ak_ovs; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
     o_data_tx.o_tx = o_tx(delay+1:end); %elimina retardo de grupo
 

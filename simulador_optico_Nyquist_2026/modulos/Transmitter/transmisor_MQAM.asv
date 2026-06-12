@@ -1,25 +1,22 @@
 function [o_data_tx] = transmisor_MQAM(i_cfg_s)
 
 %Settings
-M = i_cfg_s.M
-Lsyms = i_cfg_s.L
-BR = i_cfg_s.BR
-NTAPS = i_cfg_s.NTAPS
-OVS = i_cfg_s.OVS
-fs = OVS*BR
-rolloff = i_cfg_s.rollof
-t0 = 0;
-delay = (NTAPS-1)/2;
+    M = i_cfg_s.M;
+    Lsymbs = i_cfg_s.Lsymbs;
+    BR = i_cfg_s.BR;
+    NTAPS = i_cfg_s.NTAPS_RRC;
+    OVS = i_cfg_s.OVS;
+    fs = OVS*BR;
+    rolloff = i_cfg_s.rolloff;
+    t0 = 0;
+    delay = (NTAPS-1)/2;
 
 %Procesamiento
-o_data_tx.ak = QAM_gen(M,Lsyms);
-ak_ovs = oversampler(OVS,Lsyms,ak); 
-rrc = root_raised_cosine(BR,fs,rolloff,NTAPS,t0);
-o_tx = filter(ak_ovs,1,rrc);
-o_data_tx.o_tx = 
+    o_data_tx.ak = QAM_gen(M,Lsymbs);
+    ak_ovs = oversampler(OVS,Lsymbs,o_data_tx.ak); 
+    rrc = root_raised_cosine(BR,fs,rolloff,NTAPS,t0);
+    o_tx = filter(rrc,1,[ak_ovs; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
+    o_data_tx.o_tx = o_tx(delay+1:end); %elimina retardo de grupo
 
-    delay = (pulse_shaping_ntaps-1)/2;
-    yup = filter(htx,1,[xup; zeros(pulse_shaping_ntaps-1,1)]);
-    yup = yup(delay+1:end);
 end
 
