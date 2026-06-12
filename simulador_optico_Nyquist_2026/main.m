@@ -1,0 +1,86 @@
+clear; clc; close all;
+% Config base
+cfg_s = struct();
+cfg_s.en_plots     = 1;    % Apagar graficos para sim mas rapida
+cfg_s.en_n         = 1;    % Habilita AWGN
+cfg_s.pos_n        = 1;    % 0:ruido coloreado, 1:blanco
+cfg_s.Lsymbs       = 10e6; % Cantidad de simbolos
+cfg_s.rolloff      = 0.5;  % Valor razonable
+cfg_s.OVS          = 4;    % Sobremuestreo
+cfg_s.BR           = 32e9; % Baud rate
+cfg_s.M            = 4;    % Orden de modulacion
+cfg_s.NTAPS_RRC    = 101;  
+cfg_s.NTAPS_FIR    = 101;
+cfg_s.en_ch_filter = 1;    % Habilita fir del canal
+cfg_s.ch_bw        = 32e9; % BW del canal
+cfg_s.EbNo         = 20;   % Ruido en dB
+
+EbNo_BER = [0:2:16];
+
+%%Config bloques
+%Transmisor
+o_tx_s = struct();
+o_tx_s = transmisor_MQAM(cfg_s);
+ak     = o_tx_s.ak;
+o_tx   = o_tx_s.o_tx;
+
+%Canal
+i_canal = o_tx;
+o_canal = channel(i_canal,cfg_s);
+
+%Receptor
+i_rx = o_canal;
+o_rx = struct();
+%o_rx = Receiver();
+
+%% Graficos Temporales (Analisis In-Phase / Componente Real)
+%% Graficos Temporales (Analisis In-Phase y Quadrature)
+if cfg_s.en_plots
+    
+    % 1. Definir la ventana de observacion (ej: 50 simbolos)
+    num_symbs_plot = 50; 
+    num_samps_plot = num_symbs_plot * cfg_s.OVS;
+    
+    % 2. Crear vectores de tiempo para los ejes X
+    Ts = 1 / cfg_s.BR;                 % Periodo de un simbolo (s)
+    Tsamp = Ts / cfg_s.OVS;            % Periodo de una muestra (s)
+    
+    t_symbs = (0:num_symbs_plot-1) * Ts;
+    t_samps = (0:num_samps_plot-1) * Tsamp;
+    
+    % 3. Crear figura
+    figure('Name', 'Analisis Temporal del Enlace (I & Q)', 'Position', [100, 100, 900, 700]);
+    
+    % -- Subplot 1: Simbolos (ak) --
+    subplot(3,1,1);
+    stem(t_symbs, real(ak(1:num_symbs_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
+    hold on;
+    stem(t_symbs, imag(ak(1:num_symbs_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
+    title('Símbolos Generados M-QAM');
+    ylabel('Amplitud');
+    legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
+    grid on; hold off;
+    
+    % -- Subplot 2: Salida del Transmisor (o_tx) --
+    subplot(3,1,2);
+    plot(t_samps, real(o_tx(1:num_samps_plot)), 'b', 'LineWidth', 1.5);
+    hold on;
+    plot(t_samps, imag(o_tx(1:num_samps_plot)), 'r', 'LineWidth', 1.5);
+    title('Salida del Transmisor (Señal Conformada)');
+    ylabel('Amplitud');
+    legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
+    grid on; hold off;
+    
+    % -- Subplot 3: Salida del Canal (o_canal) --
+    subplot(3,1,3);
+    plot(t_samps, real(o_canal(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+    hold on;
+    plot(t_samps, imag(o_canal(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+    title(sprintf('Salida del Canal (FIR + AWGN, Eb/No = %d dB)', cfg_s.EbNo));
+    xlabel('Tiempo (s)');
+    ylabel('Amplitud');
+    legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
+    grid on; hold off;
+    
+    sgtitle('Simulador de Comunicaciones Digitales - Dominio del Tiempo (I & Q)');
+end

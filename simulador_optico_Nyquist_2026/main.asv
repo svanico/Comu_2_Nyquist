@@ -1,0 +1,31 @@
+clear; clc; close all;
+% Config base
+cfg_s = struct();
+cfg_s.en_plots     = 0;    % Apagar graficos para sim mas rapida
+cfg_s.en_n         = 1;    % Habilita AWGN
+cfg_s.pos_n        = 1;    % Ruido coloreado o blanco
+cfg_s.Lsymbs       = 10e6; % Cantidad de simbolos
+cfg_s.rolloff      = 0.5;  % Valor razonable
+cfg_s.OVS          = 4;    % Sobremuestreo
+cfg_s.BR           = 32e9; % Baud rate
+cfg_s.M            = 4;    % Orden de modulacion
+cfg_s.NTAPS_RRC    = 101;  
+cfg_s.NTAPS_FIR    = 101;
+cfg_s.en_ch_filter = 1;    % Habilita fir del canal
+cfg_s.ch_bw        = 32e9; % BW del canal
+cfg_s.EbNo         = 20;   % Ruido en dB
+
+EbNo_BER = [0:2:16];
+
+%%Config bloques
+%Transmisor
+o_tx_s = struct();
+o_tx_s = transmisor_MQAM(cfg_s);
+ak     = o_tx_s.ak;
+o_tx   = o_tx_s.o_tx;
+
+%Canal
+i_canal = o_tx;
+o_canal = channel(i_canal,i_cfg_s);
+
+%Receptor
