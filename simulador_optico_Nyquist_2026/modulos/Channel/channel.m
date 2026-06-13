@@ -42,5 +42,9 @@ function [o_channel] = channel(i_channel,i_cfg_s)
         s = filter(b,1,[i_channel;zeros(NTAPS-1,1)]); %padding de ceros
         o_channel = o_channel(delay+1:end); %elimina retardo de grupo
         o_channel = o_channel + n; %ruido a la salida
+
+
+        %en la 43 no seria o_channel = s() ? pq si pos_ruido no se cumple o
+        %channel no esta definido, o si?
 end
 
