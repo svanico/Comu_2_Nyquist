@@ -7,7 +7,7 @@ if mod(Ntaps,2)==0
     Ntaps=Ntaps+1; %Fuerzo cant de taps impar
 end
 
-t= ([-Ntaps/2:1:Ntaps/2].*Ts)+t0;
+t= ([(-Ntaps+1)/2:1:(Ntaps-1)/2].*Ts)+t0;
 t_norm = t./T;
 ipr = ( sin(pi.*t_norm.*(1-rolloff)) + 4.*rolloff.*t_norm.*cos(pi.*t_norm.*(1+rolloff)) ) ./ ( pi.*t_norm.*(1-(4*rolloff.*t_norm).^2) ) ;
 ipr(isnan(ipr)) = 1 + rolloff*(4/pi-1); 
