@@ -2,18 +2,18 @@ clear; clc; close all;
 % Config base
 cfg_s = struct();
 cfg_s.en_plots     = 1;    % Apagar/prender graficos
-cfg_s.en_n         = 1;    % Habilita AWGN
+cfg_s.en_n         = 0;    % Habilita AWGN
 cfg_s.pos_n        = 1;    % 0:ruido coloreado, 1:blanco
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.6;  % Exceso de ancho de banda
+cfg_s.rolloff      = 0.9;  % Exceso de ancho de banda
 cfg_s.OVS          = 4;    % Sobremuestreo
 cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
-cfg_s.NTAPS_RRC    = 51;  
+cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 cfg_s.en_ch_filter = 1;    % Habilita fir del canal
 cfg_s.ch_bw        = 32e9; % BW del canal
-cfg_s.EbNo         = 20;   % Ruido en dB
+cfg_s.EbNo         = 100;   % Ruido en dB
 
 EbNo_BER = [0:2:16];
 
@@ -32,7 +32,9 @@ o_canal = channel(i_canal,cfg_s);
 %Receptor
 i_rx = o_canal;
 o_rx = struct();
-%o_rx = Receiver();
+o_rx = Receiver(i_rx,cfg_s);
+y = o_rx.y;
+yk = o_rx.o_dws;
 
 %% Graficos Temporales
 if cfg_s.en_plots
@@ -46,7 +48,7 @@ if cfg_s.en_plots
     t_s = (0:num_symbs_plot-1) * T_s; %vectores de tiempo
     t_ovs = (0:num_samps_plot-1) * T_OVS;
     
-    %Figura
+    %%Transmisor
     figure('Name', 'Analisis Temporal del Enlace (I & Q)', 'Position', [100, 100, 900, 700]);
     
     %Simbolos (ak)
@@ -86,6 +88,31 @@ if cfg_s.en_plots
     plot(t_ovs, imag(o_canal(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
     title(sprintf('Salida del Canal (FIR + AWGN, Eb/No = %d dB)', cfg_s.EbNo));
     xlabel('Tiempo (s)');
+    ylabel('Amplitud');
+    legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
+    grid on; hold off;
+    
+    %%Receptor
+    figure('Name', 'Analisis Temporal del Enlace (I & Q)', 'Position', [100, 100, 900, 700]);
+    
+    %Simbolos (ak)
+
+    %Simbolos sobremuestreados (ak)
+    subplot(2,1,1);
+    plot(t_ovs, real(y(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+    hold on;
+    plot(t_ovs, imag(y(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+    title(sprintf('Salida del Canal (FIR + AWGN, Eb/No = %d dB)', cfg_s.EbNo));
+    xlabel('Tiempo (s)');
+    ylabel('Amplitud');
+    legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
+    grid on; hold off;
+
+    subplot(2,1,2);
+    stem(t_s, real(yk(1:num_symbs_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
+    hold on;
+    stem(t_s, imag(yk(1:num_symbs_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
+    title('Símbolos Generados M-QAM');
     ylabel('Amplitud');
     legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
     grid on; hold off;
