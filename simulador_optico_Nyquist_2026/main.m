@@ -3,6 +3,7 @@ clear; clc; close all;
 cfg_s = struct();
 cfg_s.en_plots     = 1;    % Apagar/prender graficos
 cfg_s.en_n         = 0;    % Habilita AWGN
+cfg_s.en_ch_filter = 0;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 0:ruido coloreado, 1:blanco
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
 cfg_s.rolloff      = 0.9;  % Exceso de ancho de banda
@@ -11,7 +12,6 @@ cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
-cfg_s.en_ch_filter = 1;    % Habilita fir del canal
 cfg_s.ch_bw        = 32e9; % BW del canal
 cfg_s.EbNo         = 100;   % Ruido en dB
 
