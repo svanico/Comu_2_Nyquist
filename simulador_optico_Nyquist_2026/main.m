@@ -78,7 +78,7 @@ if cfg_s.en_plots
     stem(t_ovs, real(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
     hold on;
     stem(t_ovs, imag(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
-    title('Símbolos Generados M-QAM');
+    title('Símbolos Generados M-QAM upsampler');
     ylabel('Amplitud');
     legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
     grid on; hold off;

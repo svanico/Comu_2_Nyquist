@@ -8,7 +8,7 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
     fs = OVS*BR;
     rolloff = i_cfg_s.rolloff;
     t0 = 0;
-    delay = (NTAPS-1)/2;
+    % delay = (NTAPS-1)/2;
 
 %Procesamiento
     r = i_rx;
@@ -20,6 +20,8 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
 
     y = filter(rrc,1,[r; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
     o_data_rx.y = y(delay+1:end-delay)/OVS; %elimina retardo de grupo
+    y = filter(rrc,1,[r; zeros(Lrrc-1,1)]); %padding de ceros para la cola del filtro
+    o_data_rx.y = y(delay+1:end)/OVS; %elimina retardo de grupo
 
     o_data_rx.o_dws = downsampler(OVS,o_data_rx.y);
 
@@ -28,4 +30,7 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
     o_data_rx.ak_hat = slicer(o_data_rx.o_dws,M);
 
 end
+
+%en la linea 21 hice el zeros padding para el largo del filtro (Lrrc) y no
+%con los Ntaps (no se si esta del todo bien)
 
