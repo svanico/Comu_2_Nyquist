@@ -1,4 +1,5 @@
-function [o_data_rx] = Receiver(i_rx,i_cfg_s)
+function [o_data_tx] = transmisor_QAM(i_cfg_s)
+
 %Settings
     M = i_cfg_s.M;
     Lsymbs = i_cfg_s.Lsymbs;
@@ -11,23 +12,16 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
     delay = (NTAPS-1)/2;
 
 %Procesamiento
-    r = i_rx;
+    o_data_tx.ak = QAM_gen(M,Lsymbs);
+    o_data_tx.ak_ovs = oversampler(OVS,Lsymbs,o_data_tx.ak); 
     [~, rrc] = root_raised_cosine(BR,fs,rolloff,NTAPS,t0);
     rrc = rrc ./ norm(rrc) * sqrt(OVS);
     
     Lrrc = length(rrc);
     delay = floor((Lrrc-1)/2); %calculo el delay para el largo del rrc
 
-    y = filter(rrc,1,[r; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
-    o_data_rx.y = y(delay+1:end-delay)/OVS; %elimina retardo de grupo
+    o_tx = filter(rrc,1,[o_data_tx.ak_ovs; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
+    o_data_tx.o_tx = o_tx(delay+1:end-delay); %elimina retardo de grupo
 
-    o_data_rx.o_dws = downsampler(OVS,o_data_rx.y);
-
-
-%Slicer
-    o_data_rx.ak_hat = slicer(o_dws,M);
-
-%Ber checker
-    o_data_rx.[ber,errors] = BER_checker(ak_hat, ref_v, M, guard);
 end
 

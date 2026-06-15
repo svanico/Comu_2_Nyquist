@@ -1,21 +1,24 @@
 clear; clc; close all;
+
 % Config base
 cfg_s = struct();
-cfg_s.en_plots     = 1;    % Apagar/prender graficos
-cfg_s.en_n         = 0;    % Habilita AWGN
-cfg_s.en_ch_filter = 0;    % Habilita fir del canal
+cfg_s.en_n         = 1;    % Habilita AWGN
+cfg_s.en_ch_filter = 1;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 0:ruido coloreado, 1:blanco
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.9;  % Exceso de ancho de banda
+cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
 cfg_s.OVS          = 4;    % Sobremuestreo
 cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 cfg_s.ch_bw        = 32e9; % BW del canal
-cfg_s.EbNo         = 100;   % Ruido en dB
 
-EbNo_BER = [0:2:16];
+% Vector de Eb/No a evaluar
+EbNo_BER = 0:2:16;
+
+% Llamada a la función superior de simulación
+[ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER);
 
 %%Config bloques
 %Transmisor
@@ -24,6 +27,7 @@ o_tx_s = transmisor_QAM(cfg_s);
 ak     = o_tx_s.ak;
 ak_up  = o_tx_s.ak_ovs;
 o_tx   = o_tx_s.o_tx;
+rrc    = o_tx_s.rrc;
 
 %Canal
 i_canal = o_tx;
@@ -35,6 +39,14 @@ o_rx = struct();
 o_rx = Receiver(i_rx,cfg_s);
 y = o_rx.y;
 yk = o_rx.o_dws;
+ak_hat = o_rx.ak_hat;
+
+%Ber checker
+[ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
+o_data_rx.ber = ber;
+o_data_rx.ber = errors;
+
+
 
 %% Graficos Temporales
 if cfg_s.en_plots
