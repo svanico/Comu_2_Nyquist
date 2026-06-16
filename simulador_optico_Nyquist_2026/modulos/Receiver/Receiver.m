@@ -18,8 +18,9 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
     Lrrc = length(rrc);
     delay = floor((Lrrc-1)/2); %calculo el delay para el largo del rrc
 
-    y = filter(rrc,1,[r; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
-    o_data_rx.y = y(delay+1:end-delay)/OVS; %elimina retardo de grupo
+    % y = filter(rrc,1,[r; zeros(NTAPS-1,1)]); %padding de ceros para la cola del filtro
+    % o_data_rx.y = y(delay+1:end-delay)/OVS; %elimina retardo de grupo
+
     y = filter(rrc,1,[r; zeros(Lrrc-1,1)]); %padding de ceros para la cola del filtro
     o_data_rx.y = y(delay+1:end-delay)/OVS; %elimina retardo de grupo
 
@@ -32,5 +33,5 @@ function [o_data_rx] = Receiver(i_rx,i_cfg_s)
 end
 
 %en la linea 21 hice el zeros padding para el largo del filtro (Lrrc) y no
-%con los Ntaps (no se si esta del todo bien)
+%con los Ntaps (y comente el otro para que no se pisen)
 

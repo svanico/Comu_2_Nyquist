@@ -1,4 +1,4 @@
-function [ber, n_errors] = ber_check(data_v, ref_v, M, guard)
+function [ber, n_errors] = BER_checker(data_v, ref_v, M, guard)
     
     %--------------------------%
     %           ERRORS
