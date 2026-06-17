@@ -1,21 +1,33 @@
 clear; clc; close all;
+
 % Config base
 cfg_s = struct();
-cfg_s.en_plots     = 1;    % Apagar/prender graficos
 cfg_s.en_n         = 1;    % Habilita AWGN
-cfg_s.en_ch_filter = 1;    % Habilita fir del canal
-cfg_s.pos_n        = 1;    % 0:ruido coloreado, 1:blanco
+cfg_s.en_ch_filter = 0;    % Habilita fir del canal
+cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco        (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.98;  % Exceso de ancho de banda
-cfg_s.OVS          = 4;    % Sobremuestreo
+cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
+cfg_s.OVS          = 2;    % Sobremuestreo
 cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 cfg_s.ch_bw        = 32e9; % BW del canal
-cfg_s.EbNo         = 100;   % Ruido en dB
+cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
 
-EbNo_BER = [0:2:16];
+cfg_s.en_plots     = 0;     %agregue esto para habilitar o no los graficos
+cfg_s.en_curva_ber = 1;
+
+% Vector de Eb/No, Lsymbs y M a evaluar
+EbNo_BER    = 0:2:16;
+L_vec       = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; %vector de símbolos variable para cada EbNo
+M_vec       = [4 16];
+
+% Llamada a la función superior de simulación
+if cfg_s.en_curva_ber
+
+    [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec,M_vec);
+end
 
 %%Config bloques
 %Transmisor
@@ -36,10 +48,14 @@ o_rx = struct();
 o_rx = Receiver(i_rx,cfg_s);
 y = o_rx.y;
 yk = o_rx.o_dws;
+ak_hat = o_rx.ak_hat;
 
 %Ber checker
-[ber,errors] = BER_checker(ak_hat,ak, M, 0);
-o_data_rx.ber
+[ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
+o_data_rx.ber = ber;
+o_data_rx.ber = errors;
+
+
 
 %% Graficos Temporales
 if cfg_s.en_plots
@@ -71,7 +87,7 @@ if cfg_s.en_plots
     stem(t_ovs, real(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
     hold on;
     stem(t_ovs, imag(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
-    title('Símbolos Generados M-QAM');
+    title('Símbolos Generados M-QAM upsampler');
     ylabel('Amplitud');
     legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
     grid on; hold off;

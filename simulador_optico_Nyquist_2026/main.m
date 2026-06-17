@@ -3,28 +3,32 @@ clear; clc; close all;
 % Config base
 cfg_s = struct();
 cfg_s.en_n         = 1;    % Habilita AWGN
-cfg_s.en_ch_filter = 1;    % Habilita fir del canal
+cfg_s.en_ch_filter = 0;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco        (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
 cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
-cfg_s.OVS          = 4;    % Sobremuestreo
+cfg_s.OVS          = 2;    % Sobremuestreo
 cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 cfg_s.ch_bw        = 32e9; % BW del canal
+cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
 
-cfg_s.en_plots = 0;     %agregue esto para habilitar o no los graficos
+cfg_s.en_plots     = 0;     %agregue esto para habilitar o no los graficos
+cfg_s.en_curva_ber = 1;
 
-% Vector de Eb/No a evaluar
-EbNo_BER = 0:2:16;
-
-
+% Vector de Eb/No, Lsymbs y M a evaluar
+EbNo_BER    = 0:2:16;
+L_vec       = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; %vector de símbolos variable para cada EbNo
+M_vec       = [4 16];
 
 % Llamada a la función superior de simulación
-[ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER);
+if cfg_s.en_curva_ber
 
-
+    [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec,M_vec);
+    
+end
 
 %%Config bloques
 %Transmisor
@@ -34,8 +38,6 @@ ak     = o_tx_s.ak;
 ak_up  = o_tx_s.ak_ovs;
 o_tx   = o_tx_s.o_tx;
 rrc    = o_tx_s.rrc;
-cfg_s.EbNo = 20;    %valor de ebno para los graficos 
-
 
 %Canal
 i_canal = o_tx;
