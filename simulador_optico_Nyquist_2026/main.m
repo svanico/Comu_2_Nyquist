@@ -30,7 +30,7 @@ if cfg_s.en_curva_ber
     
 end
 
-%%Config bloques
+%% Config bloques
 %Transmisor
 o_tx_s = struct();
 o_tx_s = transmisor_QAM(cfg_s);
