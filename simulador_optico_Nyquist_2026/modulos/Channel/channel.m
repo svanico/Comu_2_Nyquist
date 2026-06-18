@@ -27,7 +27,7 @@ function [o_channel] = channel(i_channel, i_cfg_s)
     end
 
     if en_ch
-        b = fir1(NTAPS - 1, fc);  %faltaba agregar el -1 a los ntaps
+        b = fir1(NTAPS - 1, fc); 
         
         if pos_ruido
             % Ruido coloreado
