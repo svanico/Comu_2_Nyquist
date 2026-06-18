@@ -15,8 +15,17 @@ cfg_s.NTAPS_FIR    = 101;
 cfg_s.ch_bw        = 32e9; % BW del canal
 cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
 
-cfg_s.en_plots     = 0;     %agregue esto para habilitar o no los graficos
-cfg_s.en_curva_ber = 1;
+cfg_s.en_plots     = 0;     % habilitar o no los graficos temporales
+cfg_s.en_curva_ber = 1;     % habilitar o no la curva ber
+
+cfg_s.en_debug_plots = 0;   % habilita herramientas de debugging
+
+cfg_s.debug_psd      = 1;   % PSD
+cfg_s.debug_eye      = 1;   % diagrama de ojo
+cfg_s.debug_const    = 1;   % constelacion
+cfg_s.debug_Nsymbs   = 1e6; % cantidad de simbolos para graficar
+
+
 
 % Vector de Eb/No, Lsymbs y M a evaluar
 EbNo_BER    = 0:2:16;
@@ -54,7 +63,108 @@ ak_hat = o_rx.ak_hat;
 %Ber checker
 [ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
 o_data_rx.ber = ber;
-o_data_rx.ber = errors;
+o_data_rx.errors = errors;
+
+
+%% Herramientas de debugging: PSD, diagrama de ojo y constelacion
+
+if cfg_s.en_debug_plots
+
+    fs  = cfg_s.OVS * cfg_s.BR;
+    OVS = cfg_s.OVS;
+
+    Ndbg_symbs = min(cfg_s.debug_Nsymbs, length(yk));
+    Ndbg_samps = min(Ndbg_symbs * OVS, length(o_tx));
+
+    %%PSD
+    if cfg_s.debug_psd
+
+        NFFT = 4096;
+        win_len = min(2048, length(o_tx));
+        win = hamming(win_len);
+        overlap = floor(win_len/2);
+
+        [Ptx, f] = pwelch(o_tx, win, overlap, NFFT, fs, 'centered');
+        [Pch, ~] = pwelch(o_canal, win, overlap, NFFT, fs, 'centered');
+        [Prx, ~] = pwelch(y, win, overlap, NFFT, fs, 'centered');
+
+        figure('Name','Debugging - PSD');
+
+        plot(f/1e9, 10*log10(Ptx./max(Ptx) + eps), 'LineWidth', 1.3);
+        hold on;
+        plot(f/1e9, 10*log10(Pch./max(Pch) + eps), 'LineWidth', 1.3);
+        plot(f/1e9, 10*log10(Prx./max(Prx) + eps), 'LineWidth', 1.3);
+
+        grid on;
+        xlabel('Frecuencia [GHz]');
+        ylabel('PSD normalizada [dB]');
+        title(sprintf('PSD - M = %d, Eb/No = %d dB', cfg_s.M, cfg_s.EbNo));
+        legend('Salida TX', 'Salida canal', 'Salida filtro RX', 'Location','best');
+
+    end
+
+    %%Diagrama de ojo
+    if cfg_s.debug_eye
+
+        span_eye = 2;                 % simbolos por traza
+        Ns_eye = span_eye * OVS;      % muestras por traza
+
+        Neye = floor(length(y)/Ns_eye) * Ns_eye;
+        Neye = min(Neye, 300 * Ns_eye); % cantidad maxima de trazas
+
+        y_eye = y(1:Neye);
+        eye_I = reshape(real(y_eye), Ns_eye, []);
+        eye_Q = reshape(imag(y_eye), Ns_eye, []);
+
+        t_eye = (0:Ns_eye-1) / fs;
+        t_eye = t_eye / (1/cfg_s.BR); % tiempo normalizado a Ts
+
+        figure('Name','Debugging - Diagrama de ojo');
+
+        subplot(2,1,1);
+        plot(t_eye, eye_I, 'LineWidth', 0.8);
+        grid on;
+        xlabel('Tiempo normalizado [T_s]');
+        ylabel('Amplitud');
+        title('Diagrama de ojo - Rama I');
+
+        subplot(2,1,2);
+        plot(t_eye, eye_Q, 'LineWidth', 0.8);
+        grid on;
+        xlabel('Tiempo normalizado [T_s]');
+        ylabel('Amplitud');
+        title('Diagrama de ojo - Rama Q');
+
+    end
+
+    %%Constelacion
+    if cfg_s.debug_const
+
+        Nconst = min(cfg_s.debug_Nsymbs, length(yk));
+        Nconst = min(Nconst, length(ak));
+
+        figure('Name','Debugging - Constelacion');
+
+        plot(real(ak(1:Nconst)), imag(ak(1:Nconst)), 'o', ...
+            'DisplayName','Símbolos TX');
+        hold on;
+
+        plot(real(yk(1:Nconst)), imag(yk(1:Nconst)), '.', ...
+            'DisplayName','Muestras RX antes del slicer');
+
+        plot(real(ak_hat(1:Nconst)), imag(ak_hat(1:Nconst)), 'x', ...
+            'DisplayName','Símbolos decididos');
+
+        grid on;
+        axis equal;
+        xlabel('In-Phase');
+        ylabel('Quadrature');
+        title(sprintf('Constelacion - M = %d, Eb/No = %d dB', cfg_s.M, cfg_s.EbNo));
+        legend('Location','best');
+
+    end
+
+end
 
 
 
