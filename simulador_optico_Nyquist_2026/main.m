@@ -7,7 +7,11 @@ cfg_s.en_ch_filter = 0;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
 cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
-cfg_s.OVS          = 2;    % Sobremuestreo
+% cfg_s.OVS          = 2;    % Sobremuestreo
+cfg_s.OVS.CH  = 2;   % Sobremuestreo del transmisor/canal
+cfg_s.OVS.DSP = 2;   % Sobremuestreo del DSP/LMS
+
+
 cfg_s.BR           = 32e9; % Baud rate
 cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
@@ -71,12 +75,18 @@ o_data_rx.errors = errors;
 
 if cfg_s.en_debug_plots
 
-    OVS = cfg_s.OVS;
-    fs  = cfg_s.OVS * cfg_s.BR;
+    % OVS = cfg_s.OVS;
+    % fs  = cfg_s.OVS * cfg_s.BR;
+    OVS_CH  = cfg_s.OVS.CH;
+    OVS_DSP = cfg_s.OVS.DSP;
+    
+    fs_ch  = OVS_CH  * cfg_s.BR;
+    fs_dsp = OVS_DSP * cfg_s.BR;
 
 
     Ndbg_symbs = min(cfg_s.debug_Nsymbs, length(yk));
-    Ndbg_samps = min(Ndbg_symbs * OVS, length(o_tx));
+    % Ndbg_samps = min(Ndbg_symbs * OVS, length(o_tx));
+    Ndbg_samps = min(Ndbg_symbs * OVS_CH, length(o_tx));
 
     %%PSD
     if cfg_s.debug_psd
@@ -86,9 +96,12 @@ if cfg_s.en_debug_plots
         win = hamming(win_len);
         overlap = floor(win_len/2);
 
-        [Ptx, f] = pwelch(o_tx, win, overlap, NFFT, fs, 'centered');
-        [Pch, ~] = pwelch(o_canal, win, overlap, NFFT, fs, 'centered');
-        [Prx, ~] = pwelch(y, win, overlap, NFFT, fs, 'centered');
+        % [Ptx, f] = pwelch(o_tx, win, overlap, NFFT, fs, 'centered');
+        % [Pch, ~] = pwelch(o_canal, win, overlap, NFFT, fs, 'centered');
+        % [Prx, ~] = pwelch(y, win, overlap, NFFT, fs, 'centered');
+        [Ptx, f] = pwelch(o_tx, win, overlap, NFFT, fs_ch, 'centered');
+        [Pch, ~] = pwelch(o_canal, win, overlap, NFFT, fs_ch, 'centered');
+        [Prx, ~] = pwelch(y, win, overlap, NFFT, fs_ch, 'centered');
 
         figure('Name','Debugging - PSD');
 
@@ -109,7 +122,9 @@ if cfg_s.en_debug_plots
     if cfg_s.debug_eye
 
         span_eye = 2;                 % simbolos por traza
-        Ns_eye = span_eye * OVS;      % muestras por traza
+        % Ns_eye = span_eye * OVS;      % muestras por traza
+        Ns_eye = span_eye * OVS_CH;
+
 
         Neye = floor(length(y)/Ns_eye) * Ns_eye;
         Neye = min(Neye, 300 * Ns_eye); % cantidad maxima de trazas
@@ -118,7 +133,8 @@ if cfg_s.en_debug_plots
         eye_I = reshape(real(y_eye), Ns_eye, []);    % real(y_eye)  => rama I y reshape me da una matriz donde cada columna es una traza del ojo
         eye_Q = reshape(imag(y_eye), Ns_eye, []);    %imag(y_eye)  => rama Q y reshape me da una matriz donde cada columna es una traza del ojo
 
-        t_eye = (0:Ns_eye-1) / fs;
+        % t_eye = (0:Ns_eye-1) / fs;
+        t_eye = (0:Ns_eye-1) / fs_ch;
         t_eye = t_eye / (1/cfg_s.BR); % tiempo normalizado a Ts
 
         figure('Name','Debugging - Diagrama de ojo');
@@ -174,13 +190,21 @@ end
 if cfg_s.en_plots
     
     num_symbs_plot = 50; %ventana de observacion
-    num_samps_plot = num_symbs_plot * cfg_s.OVS;
+    % num_samps_plot = num_symbs_plot * cfg_s.OVS;
+    % 
+    % T_s = 1 / cfg_s.BR;     
+    % T_OVS = T_s / cfg_s.OVS;        
+    % 
+    % t_s = (0:num_symbs_plot-1) * T_s; %vectores de tiempo
+    % t_ovs = (0:num_samps_plot-1) * T_OVS;
+
+    num_samps_ch_plot = num_symbs_plot * cfg_s.OVS.CH;
     
-    T_s = 1 / cfg_s.BR;     
-    T_OVS = T_s / cfg_s.OVS;        
+    T_s  = 1 / cfg_s.BR;     
+    T_ch = T_s / cfg_s.OVS.CH;        
     
-    t_s = (0:num_symbs_plot-1) * T_s; %vectores de tiempo
-    t_ovs = (0:num_samps_plot-1) * T_OVS;
+    t_s  = (0:num_symbs_plot-1) * T_s;
+    t_ch = (0:num_samps_ch_plot-1) * T_ch;    
     
     %%Transmisor
     figure('Name', 'Analisis Temporal del Enlace (I & Q)', 'Position', [100, 100, 900, 700]);
@@ -197,9 +221,13 @@ if cfg_s.en_plots
 
      %Simbolos sobremuestreados (ak)
     subplot(4,1,2);
-    stem(t_ovs, real(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
+    % stem(t_ovs, real(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
+    stem(t_ch, real(ak_up(1:num_samps_ch_plot)), 'filled', 'MarkerSize', 5, 'Color', 'b');
+
     hold on;
-    stem(t_ovs, imag(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
+    % stem(t_ovs, imag(ak_up(1:num_samps_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
+    stem(t_ch, imag(ak_up(1:num_samps_ch_plot)), 'filled', 'MarkerSize', 5, 'Color', 'r');
+
     title('Símbolos Generados M-QAM upsampler');
     ylabel('Amplitud');
     legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
@@ -207,9 +235,13 @@ if cfg_s.en_plots
     
     %salida del transmisor (o_tx)
     subplot(4,1,3);
-    plot(t_ovs, real(o_tx(1:num_samps_plot)), 'b', 'LineWidth', 1.5);
+    % plot(t_ovs, real(o_tx(1:num_samps_plot)), 'b', 'LineWidth', 1.5);
+    plot(t_ch, real(o_tx(1:num_samps_ch_plot)), 'b', 'LineWidth', 1.5);
+
     hold on;
-    plot(t_ovs, imag(o_tx(1:num_samps_plot)), 'r', 'LineWidth', 1.5);
+    % plot(t_ovs, imag(o_tx(1:num_samps_plot)), 'r', 'LineWidth', 1.5);
+    plot(t_ch, imag(o_tx(1:num_samps_ch_plot)), 'r', 'LineWidth', 1.5);
+
     title('Salida del Transmisor (Señal Conformada)');
     ylabel('Amplitud');
     legend('Rama I (Real)', 'Rama Q (Imaginaria)', 'Location', 'best');
@@ -217,9 +249,13 @@ if cfg_s.en_plots
     
     %salida del canal
     subplot(4,1,4);
-    plot(t_ovs, real(o_canal(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+    % plot(t_ovs, real(o_canal(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+    plot(t_ch, real(o_canal(1:num_samps_ch_plot)), 'b', 'LineWidth', 1.2);
+
     hold on;
-    plot(t_ovs, imag(o_canal(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+    % plot(t_ovs, imag(o_canal(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+    plot(t_ch, imag(o_canal(1:num_samps_ch_plot)), 'r', 'LineWidth', 1.2);
+
     title(sprintf('Salida del Canal (FIR + AWGN, Eb/No = %d dB)', cfg_s.EbNo));
     xlabel('Tiempo (s)');
     ylabel('Amplitud');
@@ -233,9 +269,13 @@ if cfg_s.en_plots
 
     %Simbolos sobremuestreados (ak)
     subplot(2,1,1);
-    plot(t_ovs, real(y(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+    % plot(t_ovs, real(y(1:num_samps_plot)), 'b', 'LineWidth', 1.2);
+        plot(t_ch, real(y(1:num_samps_ch_plot)), 'b', 'LineWidth', 1.2);
+
     hold on;
-    plot(t_ovs, imag(y(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+    % plot(t_ovs, imag(y(1:num_samps_plot)), 'r', 'LineWidth', 1.2);
+        plot(t_ch, imag(y(1:num_samps_ch_plot)), 'r', 'LineWidth', 1.2);
+
     title(sprintf('Salida del Canal (FIR + AWGN, Eb/No = %d dB)', cfg_s.EbNo));
     xlabel('Tiempo (s)');
     ylabel('Amplitud');
