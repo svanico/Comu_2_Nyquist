@@ -4,7 +4,7 @@ clear; clc; close all;
 cfg_s = struct();
 cfg_s.en_n         = 1;    % Habilita AWGN
 cfg_s.en_ch_filter = 0;    % Habilita fir del canal
-cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco        (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
+cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
 cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
 cfg_s.OVS          = 2;    % Sobremuestreo
@@ -16,12 +16,12 @@ cfg_s.ch_bw        = 32e9; % BW del canal
 cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
 
 cfg_s.en_plots     = 0;     % habilitar o no los graficos temporales
-cfg_s.en_curva_ber = 1;     % habilitar o no la curva ber
+cfg_s.en_curva_ber = 0;     % habilitar o no la curva ber
 
-cfg_s.en_debug_plots = 0;   % habilita herramientas de debugging
+cfg_s.en_debug_plots = 1;   % habilita herramientas de debugging
 
-cfg_s.debug_psd      = 1;   % PSD
-cfg_s.debug_eye      = 1;   % diagrama de ojo
+cfg_s.debug_psd      = 0;   % PSD
+cfg_s.debug_eye      = 0;   % diagrama de ojo
 cfg_s.debug_const    = 1;   % constelacion
 cfg_s.debug_Nsymbs   = 1e6; % cantidad de simbolos para graficar
 
@@ -35,11 +35,12 @@ M_vec       = [4 16];
 % Llamada a la función superior de simulación
 if cfg_s.en_curva_ber
 
-    [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec,M_vec);
+    [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
     
 end
 
 %% Config bloques
+
 %Transmisor
 o_tx_s = struct();
 o_tx_s = transmisor_QAM(cfg_s);
@@ -70,8 +71,9 @@ o_data_rx.errors = errors;
 
 if cfg_s.en_debug_plots
 
-    fs  = cfg_s.OVS * cfg_s.BR;
     OVS = cfg_s.OVS;
+    fs  = cfg_s.OVS * cfg_s.BR;
+
 
     Ndbg_symbs = min(cfg_s.debug_Nsymbs, length(yk));
     Ndbg_samps = min(Ndbg_symbs * OVS, length(o_tx));
@@ -113,8 +115,8 @@ if cfg_s.en_debug_plots
         Neye = min(Neye, 300 * Ns_eye); % cantidad maxima de trazas
 
         y_eye = y(1:Neye);
-        eye_I = reshape(real(y_eye), Ns_eye, []);
-        eye_Q = reshape(imag(y_eye), Ns_eye, []);
+        eye_I = reshape(real(y_eye), Ns_eye, []);    % real(y_eye)  => rama I y reshape me da una matriz donde cada columna es una traza del ojo
+        eye_Q = reshape(imag(y_eye), Ns_eye, []);    %imag(y_eye)  => rama Q y reshape me da una matriz donde cada columna es una traza del ojo
 
         t_eye = (0:Ns_eye-1) / fs;
         t_eye = t_eye / (1/cfg_s.BR); % tiempo normalizado a Ts
@@ -122,7 +124,7 @@ if cfg_s.en_debug_plots
         figure('Name','Debugging - Diagrama de ojo');
 
         subplot(2,1,1);
-        plot(t_eye, eye_I, 'LineWidth', 0.8);
+        plot(t_eye, eye_I, 'LineWidth', 0.8);    %grafica todas las columnas superpuestas. Eso forma el diagrama de ojo
         grid on;
         xlabel('Tiempo normalizado [T_s]');
         ylabel('Amplitud');
@@ -150,10 +152,10 @@ if cfg_s.en_debug_plots
         hold on;
 
         plot(real(yk(1:Nconst)), imag(yk(1:Nconst)), '.', ...
-            'DisplayName','Muestras RX antes del slicer');
+            'DisplayName','Muestras RX antes del slicer');  %Grafica las muestras recibidas después del filtro y del downsampler, pero antes del slicer. las muestras yk(las nubes)
 
         plot(real(ak_hat(1:Nconst)), imag(ak_hat(1:Nconst)), 'x', ...
-            'DisplayName','Símbolos decididos');
+            'DisplayName','Símbolos decididos');   %Grafica los símbolos después del slicer.
 
         grid on;
         axis equal;
