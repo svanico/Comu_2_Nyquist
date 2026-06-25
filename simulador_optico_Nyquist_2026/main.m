@@ -3,26 +3,38 @@ clear; clc; close all;
 % Config base
 cfg_s = struct();
 cfg_s.en_n         = 1;    % Habilita AWGN
-cfg_s.en_ch_filter = 0;    % Habilita fir del canal
+cfg_s.en_ch_filter = 1;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
+cfg_s.rolloff      = 0.1;  % Exceso de ancho de banda
 % cfg_s.OVS          = 2;    % Sobremuestreo
-cfg_s.OVS.CH  = 2;   % Sobremuestreo del transmisor/canal
+cfg_s.OVS.CH  = 4;   % Sobremuestreo del transmisor/canal
 cfg_s.OVS.DSP = 2;   % Sobremuestreo del DSP/LMS
 
 
 cfg_s.BR           = 32e9; % Baud rate
-cfg_s.M            = 4;    % Orden de modulacion
+cfg_s.M            = 16;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
+
+%receptor parametros
+cfg_s.NTAPS_ffe    = 51;
+cfg_s.time_cma     = 50e3;  %tiempo del cma
+% cfg_s.R_CMA        = 13.2;  %cte de comparacion del cma usamos la de 16
+cfg_s.cma_step = 1e-3;
+cfg_s.dd_step = 1e-4;
+cfg_s.leak = 0e-6;
+
+
 cfg_s.ch_bw        = 32e9; % BW del canal
 cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
 
 cfg_s.en_plots     = 0;     % habilitar o no los graficos temporales
-cfg_s.en_curva_ber = 0;     % habilitar o no la curva ber
+cfg_s.en_curva_ber = 1;     % habilitar o no la curva ber
 
-cfg_s.en_debug_plots = 1;   % habilita herramientas de debugging
+%%llegamos hasta la curva ber
+
+cfg_s.en_debug_plots = 0;   % habilita herramientas de debugging
 
 cfg_s.debug_psd      = 0;   % PSD
 cfg_s.debug_eye      = 0;   % diagrama de ojo
@@ -60,7 +72,7 @@ o_canal = channel(i_canal,cfg_s);
 %Receptor
 i_rx = o_canal;
 o_rx = struct();
-o_rx = Receiver(i_rx,cfg_s);
+o_rx = Receiver(i_rx,cfg_s,o_tx_s);
 y = o_rx.y;
 yk = o_rx.o_dws;
 ak_hat = o_rx.ak_hat;

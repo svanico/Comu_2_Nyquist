@@ -28,7 +28,7 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             o_canal = channel(i_canal, cfg_s);
             
             % Receptor
-            o_rx = Receiver(o_canal, cfg_s);
+            o_rx = Receiver(o_canal, cfg_s,ak);
             
             % Ber checker (Almacenamiento matricial)
             [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, 0);

@@ -19,7 +19,7 @@ NTAPS_ffe = 51;
 R_CMA = 13.2;
 time_cma = 50e3;
 
-FRAME_LOG_1x = 10;  %guarda una muestra cada 10 símbolos.
+FRAME_LOG_1x = 10;
 FRAME_LOG_2x = 10;
 
 %% Symbs + PS
@@ -75,29 +75,27 @@ for idx=1:length(agc_out)
 
         % slicer_out = slicer(slicer_in,M);             %este seria el nuestro
 
-        if idx_new<time_cma         %primero entramos al cma para dar pasos grandes( lo entreno )
+        if idx_new<time_cma
             error =  slicer_in*(abs( slicer_in).^2 - R_CMA); %miro si el error esta lejos del valor esperado R (definido)
             % step = dd_step;
             step = cma_step;
 
         else
-            error =  slicer_in - slicer_out;    %muestra ecualizada - símbolo decidido (lms)
-            % step = cma_step;      %creemos que esto estuvo mal 
-            step = dd_step;
+            error =  slicer_in - slicer_out;
+            step = _step;
         end
     
-        htaps = (1-leak)*htaps - step*error*conj(buffer_filter);    %Esta es la actualización adaptativa del filtro.
+        htaps = (1-leak)*htaps - step*error*conj(buffer_filter);
 
-        
-        if mod(idx_new,FRAME_LOG_1x)==0     %calculo el resto y lo guardo donde corresponde
-            error_log(idx_new/FRAME_LOG_1x) = error;    %debugg errores
-            slicer_in_log(idx_new/FRAME_LOG_1x) = slicer_in;    %debugg slicer 
+        if mod(idx_new,FRAME_LOG_1x)==0
+            error_log(idx_new/FRAME_LOG_1x) = error;
+            slicer_in_log(idx_new/FRAME_LOG_1x) = slicer_in;
         end
 
     end
 
-    if mod(idx,FRAME_LOG_2x)==0     
-        ffe_out_log(idx/FRAME_LOG_2x) = ffe_out;        %debugg ffe(lms)
+    if mod(idx,FRAME_LOG_2x)==0
+        ffe_out_log(idx/FRAME_LOG_2x) = ffe_out;
     end
 
 end
