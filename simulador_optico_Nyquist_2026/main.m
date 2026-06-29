@@ -3,17 +3,19 @@ clear; clc; close all;
 % Config base
 cfg_s = struct();
 cfg_s.en_n         = 1;    % Habilita AWGN
-cfg_s.en_ch_filter = 1;    % Habilita fir del canal
+cfg_s.en_ch_filter = 0;    % Habilita fir del canal
 cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.1;  % Exceso de ancho de banda
-% cfg_s.OVS          = 2;    % Sobremuestreo
-cfg_s.OVS.CH  = 4;   % Sobremuestreo del transmisor/canal
-cfg_s.OVS.DSP = 2;   % Sobremuestreo del DSP/LMS
+cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
+% cfg_s.OVS         = 2;    % Sobremuestreo
+cfg_s.OVS.CH       = 4;   % Sobremuestreo del transmisor/canal
+OVS_CH = cfg_s.OVS.CH;
+cfg_s.OVS.DSP      = 2;   % Sobremuestreo del DSP/LMS
 
 
-cfg_s.BR           = 32e9; % Baud rate
-cfg_s.M            = 16;    % Orden de modulacion
+cfg_s.BR           = 32e9; % Baud rate 
+BR = cfg_s.BR;
+cfg_s.M            = 4;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 
@@ -26,17 +28,19 @@ cfg_s.dd_step = 1e-4;
 cfg_s.leak = 0e-6;
 
 
-cfg_s.ch_bw        = 32e9; % BW del canal
+cfg_s.ch_bw        = 0.5*(BR*OVS_CH/2 -1); % BW del canal
 cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
+
+cfg_s.en_plots_rx  = 1;
 
 cfg_s.en_plots     = 0;     % habilitar o no los graficos temporales
 cfg_s.en_curva_ber = 1;     % habilitar o no la curva ber
 
 %%llegamos hasta la curva ber
 
-cfg_s.en_debug_plots = 0;   % habilita herramientas de debugging
+cfg_s.en_debug_plots = 1;   % habilita herramientas de debugging
 
-cfg_s.debug_psd      = 0;   % PSD
+cfg_s.debug_psd      = 1;   % PSD
 cfg_s.debug_eye      = 0;   % diagrama de ojo
 cfg_s.debug_const    = 1;   % constelacion
 cfg_s.debug_Nsymbs   = 1e6; % cantidad de simbolos para graficar
@@ -72,7 +76,7 @@ o_canal = channel(i_canal,cfg_s);
 %Receptor
 i_rx = o_canal;
 o_rx = struct();
-o_rx = Receiver(i_rx,cfg_s,o_tx_s);
+o_rx = Receiver(i_rx,cfg_s,ak); %con pasarle solo ak esta ok
 y = o_rx.y;
 yk = o_rx.o_dws;
 ak_hat = o_rx.ak_hat;
@@ -83,7 +87,7 @@ o_data_rx.ber = ber;
 o_data_rx.errors = errors;
 
 
-%% Herramientas de debugging: PSD, diagrama de ojo y constelacion
+%% Debugging general: PSD, diagrama de ojo y constelacion
 
 if cfg_s.en_debug_plots
 
@@ -196,7 +200,52 @@ if cfg_s.en_debug_plots
 
 end
 
+%% Debugging Receiver
 
+if  cfg_s.en_plots_rx
+    
+    % Extraemos las variables del último receptor ejecutado
+    error_log = o_rx.error_log;
+    htaps = o_rx.htaps;
+    slicer_in_log = o_rx.slicer_in_log;
+    ovs_ffe = o_rx.ovs_ffe;
+    
+    fprintf('\n--- Análisis de Convergencia del Ecualizador ---\n');
+    fprintf('MSE Final LMS = %.2f dB\n', o_rx.MSE);
+    
+    % Figura 1: MSE
+    N = 100;
+    figure('Name', 'MSE Evolution', 'Color', 'w')
+    plot(10*log10(filter(ones(N,1)./N, 1, abs(error_log).^2)), 'LineWidth', 2)
+    grid on; box on;
+    xlabel('Iteration (x10)'); ylabel('Error Power [dB]');
+    title('MSE Evolution');
+
+    % Figura 2: Respuesta del FFE (Tiempo y Frecuencia)
+    figure('Name', 'FFE Analysis', 'Color', 'w')
+    subplot(2,1,1)
+    stem(abs(htaps), 'LineWidth', 2);
+    grid on; box on;
+    xlabel('Tap Index'); ylabel('Magnitude');
+    title('FFE Time Impulse Response (Magnitude)');
+    
+    subplot(2,1,2)
+    NFFT = 4096;
+    Fs = cfg_s.BR * ovs_ffe;
+    H = fft(htaps, NFFT);
+    f = linspace(0, Fs/2, NFFT/2);
+    plot(f/1e9, 20*log10(abs(H(1:NFFT/2))+1e-12), 'LineWidth', 2)
+    grid on; box on;
+    xlabel('Frequency [GHz]'); ylabel('Magnitude [dB]');
+    title('FFE Frequency Response');
+
+    % Figura 3: Constelación de salida
+    figure('Name', 'Constellation Out', 'Color', 'w')
+    plot(real(slicer_in_log(end-2000:end)), imag(slicer_in_log(end-2000:end)), '.', 'MarkerSize', 8)
+    grid on; box on;
+    xlabel('In-Phase'); ylabel('Quadrature');
+    title('Constellation after Equalization');
+end
 
 %% Graficos Temporales
 if cfg_s.en_plots

@@ -36,7 +36,7 @@ noise = randn(length(ch_out),1) + 1j.*randn(length(ch_out),1);
 ch_out = ch_out + 0.1.*noise;
 
 %% Anti Alias Filter
-[h_taps_ps ,~] = root_raised_cosine(BR, BR*ovs_ch, 0.1, 100, 0.);
+[h_taps_ps ,~] = root_raised_cosine(BR/2, BR*ovs_ch, 0.1, 100, 0.);
 aaf_out = filter(h_taps_ps,1, ch_out);
 
 %% ADC
