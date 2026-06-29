@@ -3,10 +3,10 @@ clear; clc; close all;
 % Config base
 cfg_s = struct();
 cfg_s.en_n         = 1;    % Habilita AWGN
-cfg_s.en_ch_filter = 0;    % Habilita fir del canal
-cfg_s.pos_n        = 1;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
+cfg_s.en_ch_filter = 1;    % Habilita fir del canal
+cfg_s.pos_n        = 0;    % 1:ruido coloreado, 0:blanco    (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.Lsymbs       = 1e6;  % Cantidad de simbolos
-cfg_s.rolloff      = 0.5;  % Exceso de ancho de banda
+cfg_s.rolloff      = 0.6;  % Exceso de ancho de banda
 % cfg_s.OVS         = 2;    % Sobremuestreo
 cfg_s.OVS.CH       = 4;   % Sobremuestreo del transmisor/canal
 OVS_CH = cfg_s.OVS.CH;
@@ -28,32 +28,33 @@ cfg_s.dd_step = 1e-4;
 cfg_s.leak = 0e-6;
 
 
-cfg_s.ch_bw        = 0.5*(BR*OVS_CH/2 -1); % BW del canal
-cfg_s.EbNo         = 20;   %valor de ebno para los graficos 
+% cfg_s.ch_bw        = 0.5*(BR -1); % BW del canal
+
+cfg_s.EbNo         = 10;   %valor de ebno para los graficos 
 
 cfg_s.en_plots_rx  = 1;
 
 cfg_s.en_plots     = 0;     % habilitar o no los graficos temporales
-cfg_s.en_curva_ber = 1;     % habilitar o no la curva ber
+cfg_s.en_curva_ber = 0;     % habilitar o no la curva ber
 
 %%llegamos hasta la curva ber
 
-cfg_s.en_debug_plots = 1;   % habilita herramientas de debugging
+cfg_s.en_debug_plots = 0;   % habilita herramientas de debugging
 
-cfg_s.debug_psd      = 1;   % PSD
+cfg_s.debug_psd      = 0;   % PSD
 cfg_s.debug_eye      = 0;   % diagrama de ojo
-cfg_s.debug_const    = 1;   % constelacion
+cfg_s.debug_const    = 0;   % constelacion
 cfg_s.debug_Nsymbs   = 1e6; % cantidad de simbolos para graficar
 
 
 
 % Vector de Eb/No, Lsymbs y M a evaluar
-EbNo_BER    = 0:2:10;
+EbNo_BER    = 0:2:12;
 % L_vec       = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; %vector de símbolos variable para cada EbNo
 
 L_vec = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6];      %subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 
-M_vec       = [16];
+M_vec       = [4 16];
 
 % Llamada a la función superior de simulación
 if cfg_s.en_curva_ber
