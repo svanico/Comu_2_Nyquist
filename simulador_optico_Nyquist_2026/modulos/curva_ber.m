@@ -31,7 +31,11 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             o_rx = Receiver(o_canal, cfg_s,ak);
             
             % Ber checker (Almacenamiento matricial)
-            [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, 0);
+
+            guard = cfg_s.time_cma + 1000;
+
+            [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, guard);   %Ese último 0 significa que no estás usando guardia, o sea contás también los símbolos iniciales donde el LMS todavía está aprendiendo
+
             ber_sim(m_idx, idx)    = ber;
             errors_sim(m_idx, idx) = errors;
             

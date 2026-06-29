@@ -15,7 +15,9 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     agc_taget = .3;                             %esto es a ojo (creemos)
     time_cma =  i_cfg_s.time_cma ;
     % R_CMA   =   cfg_s.R_CMA;
-    R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
+    % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
+    R_CMA = (mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
+
     dd_step = i_cfg_s.dd_step;
     cma_step = i_cfg_s.cma_step;
     leak = i_cfg_s.leak;

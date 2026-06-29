@@ -15,7 +15,7 @@ cfg_s.OVS.DSP      = 2;   % Sobremuestreo del DSP/LMS
 
 cfg_s.BR           = 32e9; % Baud rate 
 BR = cfg_s.BR;
-cfg_s.M            = 4;    % Orden de modulacion
+cfg_s.M            = 16;    % Orden de modulacion
 cfg_s.NTAPS_RRC    = 101;  
 cfg_s.NTAPS_FIR    = 101;
 
@@ -48,9 +48,12 @@ cfg_s.debug_Nsymbs   = 1e6; % cantidad de simbolos para graficar
 
 
 % Vector de Eb/No, Lsymbs y M a evaluar
-EbNo_BER    = 0:2:16;
-L_vec       = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; %vector de símbolos variable para cada EbNo
-M_vec       = [4 16];
+EbNo_BER    = 0:2:10;
+% L_vec       = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; %vector de símbolos variable para cada EbNo
+
+L_vec = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6];      %subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
+
+M_vec       = [16];
 
 % Llamada a la función superior de simulación
 if cfg_s.en_curva_ber
