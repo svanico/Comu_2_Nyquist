@@ -1,4 +1,4 @@
-clear; clc; close all;
+%clear; clc; close all;
 
 % Config base
 cfg_s = struct();
@@ -30,7 +30,7 @@ cfg_s.leak = 0e-6;
 
 % cfg_s.ch_bw        = 0.5*(BR -1); % BW del canal
 
-cfg_s.EbNo         = 10;   %valor de ebno para los graficos 
+cfg_s.EbNo         = 30;   %valor de ebno para los graficos 
 
 cfg_s.en_plots_rx  = 1;
 
@@ -223,6 +223,7 @@ if  cfg_s.en_plots_rx
     plot(10*log10(filter(ones(N,1)./N, 1, abs(error_log).^2)), 'LineWidth', 2)
     grid on; box on;
     xlabel('Iteration (x10)'); ylabel('Error Power [dB]');
+    legend('f_c=0.1');
     title('MSE Evolution');
 
     % Figura 2: Respuesta del FFE (Tiempo y Frecuencia)

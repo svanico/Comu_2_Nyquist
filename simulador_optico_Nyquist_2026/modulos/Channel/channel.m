@@ -12,7 +12,7 @@ function [o_channel] = channel(i_channel, i_cfg_s)
     fs = OVS * BR;
     delay = (NTAPS - 1) / 2;
     % fc = i_cfg_s.ch_bw / (fs / 2); 
-    fc = 0.6;
+    fc = 0.3;
     EbNo = i_cfg_s.EbNo;
     
     % Garantiza vector columna
