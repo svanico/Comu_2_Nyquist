@@ -12,7 +12,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     rolloff = i_cfg_s.rolloff;
     t0 = 0;
     
-    agc_taget = .3;                             %esto es a ojo (creemos)
+    agc_target = .3;                             %esto es a ojo (creemos)
     time_cma =  i_cfg_s.time_cma ;
     % R_CMA   =   cfg_s.R_CMA;
     % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
@@ -21,6 +21,10 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     dd_step = i_cfg_s.dd_step;
     cma_step = i_cfg_s.cma_step;
     leak = i_cfg_s.leak;
+
+    Ki = i_cfg_s.Ki;
+    Kp = i_cfg_s.Kp;
+
     FRAME_LOG_1x = 10;                          %guarda una muestra cada 10 símbolos.
     FRAME_LOG_2x = 10;
 
@@ -33,69 +37,99 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     aaf_out = aaf_out_raw(delay_aaf+1 : end-delay_aaf);
     o_data_rx.y = aaf_out;
 
-%% ADC
+%% ADC (interpolador)
     tin=(0:length(aaf_out)-1)./(BR*ovs_ch);     %al vector de lo filtrado le sacamos el ovr_ch
     tout=(0:1/(BR*ovs_ffe):tin(end)) ;          %creo un vector con ovr_fse
     dsp_in = interp1(tin,aaf_out,tout,'linear','extrap');   %interpolo el vector de lo filtrado con el nuevo vec anterior q esta a tasa ovr_fse
 
 %% Digital AGC
-    agc_out = dsp_in ./ std(dsp_in) * agc_taget; %a lo interpolado lo divido por la varianza y lo multiplico por un factor que no sabemos q hace 
+    agc_out = dsp_in ./ std(dsp_in) * agc_target; %a lo interpolado lo divido por la varianza y lo multiplico por un factor
 
-%% EQ
+%% EQ y FCR
+    %Inicializacion de matrices y variables
     htaps = zeros(NTAPS_ffe,1);
-    htaps(floor(NTAPS_ffe/2)-1) = 1;            %IMPULSO AL MEDIO
-    buffer_filter = zeros(NTAPS_ffe,1);         %%BUFFER
+    htaps(floor(NTAPS_ffe/2)-1) = 1;            %Impulso
+    buffer_filter = zeros(NTAPS_ffe,1);         %BUFFER para la señal recibida
+    phase_integral = 0;
+    phase_acc = 0; % Equivale al nco_output
 
     %%Variables to logging
     ffe_out_log = zeros(ceil(Lsymbs*ovs_ffe/FRAME_LOG_2x),1);
     error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
     slicer_in_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
+    phase_acc_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
     
     % PREASIGNACIÓN DE ARREGLOS DE DECISIÓN
-    N_symbs_rx = ceil(length(agc_out) / ovs_ffe);
+    N_symbs_rx = ceil(length(agc_out) / ovs_ffe); %cantidad de simbolos recibidos
     ak_hat_arr = zeros(N_symbs_rx, 1);
     o_dws_arr  = zeros(N_symbs_rx, 1);
 
-    for idx=1:length(agc_out)
-        buffer_filter(2:end) = buffer_filter(1:end-1);  %0100 -> 100
-        buffer_filter(1) = agc_out(idx);                
+    for idx=1:length(agc_out) %a tasa de sobremuestreo
+        buffer_filter(2:end) = buffer_filter(1:end-1); 
+        buffer_filter(1) = agc_out(idx);               
                                                 %antes: [x1 x2 x3 x4] ; después
                                                 %del shift: [x1 x1 x2 x3] ;
                                                 %después de meter muestra nueva: [x_new x1 x2 x3]
         ffe_out = htaps.'*buffer_filter;        %filtra
         
-        if mod(idx,ovs_ffe)==0                  % calculo el resto, si da 0, continuo    
-            idx_new = ceil(idx/ovs_ffe);        %Convierte el índice de muestra idx en índice de símbolo
-            slicer_in = ffe_out;                %salida del ffe, a la primera it es el mismo simbolo, pq el filtro es un pulso
+       if mod(idx,ovs_ffe)==0                  % calculo el resto, si da 0, continuo (downsampling)  
+            idx_new = ceil(idx/ovs_ffe);        % Convierte el índice de muestra idx en índice de símbolo
             
-            % slicer_out = slicer_QAM_(slicer_in,M);  %paso por el slicer, es el simbolo pero con ruido en la primera iter
-            slicer_out = slicer(slicer_in,M);   %este seria el nuestro
+            slicer_in_raw = ffe_out;            % Guardamos la salida cruda del FFE
+            
+            %CMA
+            if idx_new < time_cma                 
+                slicer_in = slicer_in_raw;          % Pasa directo, sin rotar
+                slicer_out = slicer(slicer_in, M);  % Solo para guardarlo en arreglos
+                
+                error = slicer_in*(abs(slicer_in).^2 - R_CMA); 
+                step = cma_step;
+                
+            else
+% 1. DEROTACIÓN (Fasor negativo)
+                slicer_in = slicer_in_raw * exp(-1j * phase_acc);
+                
+                % 2. DECISIÓN (Slicer)
+                slicer_out = slicer(slicer_in, M);   
+                
+                % 3. DETECTOR DE ERROR DE FASE (PED)
+                phase_error = angle(slicer_in * conj(slicer_out));
+                
+                % 4. FILTRO DE LAZO (Loop Filter PI)
+                phase_integral = phase_integral + Ki * phase_error;
+                loop_filter_out = (Kp * phase_error) + phase_integral;
+                
+                % 5. ACUMULADOR DE FASE DEL NCO (Suma para el próximo símbolo)
+                phase_acc = phase_acc + loop_filter_out;
+                
+                % 6. CÁLCULO DE ERROR PARA LMS
+                error_base = slicer_in - slicer_out; 
+                
+                % 7. REALIMENTACIÓN LMS (Multiplicado por fasor positivo/conjugado)
+                error = error_base * exp(1j * phase_acc); 
+                step = dd_step;
+            end
             
             % GUARDAMOS LOS SÍMBOLOS EN LOS VECTORES
             ak_hat_arr(idx_new) = slicer_out;
             o_dws_arr(idx_new)  = slicer_in;
-            
-            if idx_new<time_cma                 %primero entramos al cma para dar pasos grandes( lo entreno )
-                error =  slicer_in*(abs( slicer_in).^2 - R_CMA); %miro si el error esta lejos del valor esperado R (definido)
-                % step = dd_step;
-                step = cma_step;
-            else
-                error =  slicer_in - slicer_out; %muestra ecualizada - símbolo decidido (lms)
-                % step = cma_step;              %creemos que esto estuvo mal 
-                step = dd_step;
-            end
         
-            htaps = (1-leak)*htaps - step*error*conj(buffer_filter);    %Esta es la actualización adaptativa del filtro.
+            % ACTUALIZACIÓN ADAPTATIVA DEL FILTRO (CMA o LMS según la etapa)
+            htaps = (1-leak)*htaps - step*error*conj(buffer_filter);    
             
-            if mod(idx_new,FRAME_LOG_1x)==0     %calculo el resto y lo guardo donde corresponde
-                error_log(idx_new/FRAME_LOG_1x) = error;         %debugg errores
-                slicer_in_log(idx_new/FRAME_LOG_1x) = slicer_in; %debugg slicer 
+            % LOGGING A TASA 1x (Decimado)
+            if mod(idx_new,FRAME_LOG_1x)==0     
+                idx_log = idx_new/FRAME_LOG_1x;         % Índice ajustado para los arreglos
+                error_log(idx_log) = error;         
+                slicer_in_log(idx_log) = slicer_in; 
+                phase_acc_log(idx_log) = phase_acc;     % Guardamos la fase del NCO
             end
         end
         if mod(idx,FRAME_LOG_2x)==0     
-            ffe_out_log(idx/FRAME_LOG_2x) = ffe_out;             %debugg ffe(lms)
+            ffe_out_log(idx/FRAME_LOG_2x) = ffe_out;    % debugg ffe a tasa fraccionaria
         end
-    end
+        
+    end 
 
 %% Variables para el main
     % 1. Salidas principales
@@ -110,6 +144,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     % 3. Variables de diagnóstico 
     o_data_rx.error_log = error_log;
     o_data_rx.slicer_in_log = slicer_in_log;
+    o_data_rx.phase_acc_log = phase_acc_log;
     o_data_rx.htaps = htaps;
     o_data_rx.ffe_out_log = ffe_out_log;
     o_data_rx.ovs_ffe = ovs_ffe; % Necesario para graficar frecuencias en el main

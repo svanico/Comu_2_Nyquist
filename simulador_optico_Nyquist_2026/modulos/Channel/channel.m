@@ -2,6 +2,7 @@ function [o_channel] = channel(i_channel, i_cfg_s)
 %% Settings
     en_ch = i_cfg_s.en_ch_filter;
     en_n = i_cfg_s.en_n;
+    en_c_error = i_cfg_s.en_c_error;
     pos_ruido = i_cfg_s.pos_n;
     M = i_cfg_s.M;
     Lsymbs = i_cfg_s.Lsymbs;
@@ -12,9 +13,18 @@ function [o_channel] = channel(i_channel, i_cfg_s)
     fs = OVS * BR;
     delay = (NTAPS - 1) / 2;
     % fc = i_cfg_s.ch_bw / (fs / 2); 
-    fc = 0.3;
+    fc = 0.9;
     EbNo = i_cfg_s.EbNo;
-    
+
+    %Portadora
+    delta_freq      = i_cfg_s.delta_freq;     
+    phase_offset    = i_cfg_s.phase_offset; 
+    LW              = i_cfg_s.LW; 
+    freq_fluct_amp  = i_cfg_s.freq_fluct_amp;
+    freq_fluct_freq = i_cfg_s.freq_fluct_freq;
+    phase_tone_amp  = i_cfg_s.phase_tone_amp;
+    phase_tone_freq = i_cfg_s.phase_tone_freq;
+        
     % Garantiza vector columna
     i_channel = i_channel(:); 
 
@@ -47,4 +57,6 @@ function [o_channel] = channel(i_channel, i_cfg_s)
         o_channel = i_channel + n;
     end
     
+    if en_c_error
+        o_channel = carrier_errors(o_channel,fs,delta_freq,phase_offset,freq_fluct_freq,freq_fluct_amp,phase_tone_amp,phase_tone_freq,LW);
 end
