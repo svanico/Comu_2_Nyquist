@@ -1,4 +1,4 @@
-%clear; clc; close all;
+clear; clc; close all;
 %% 1. Parámetros generales
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
@@ -56,7 +56,7 @@ cfg_s.debug_eye       = 0;          % Diagrama de ojo
 cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 % --- Vectores para Curva BER ---
-EbNo_BER              = 0:2:12;
+EbNo_BER              = 0:2:10;
 M_vec                 = [4 16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
 L_vec                 = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
@@ -66,6 +66,8 @@ L_vec                 = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6]; % subi los Lvec p
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
+
+
 % Config bloques individuales (Transmisión única)
 % Transmisor
 o_tx_s = struct();
@@ -85,7 +87,8 @@ y = o_rx.y;
 yk = o_rx.o_dws;
 ak_hat = o_rx.ak_hat;
 % Ber checker
-[ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
+guard = cfg_s.time_cma + 1000;
+[ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, guard);
 o_data_rx.ber = ber;
 o_data_rx.errors = errors;
 %% DEBUGGING Y GRÁFICOS (Evaluación)
