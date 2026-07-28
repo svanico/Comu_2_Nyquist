@@ -1,4 +1,5 @@
 %clear; clc; close all;
+
 %% 1. Parámetros generales
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
@@ -6,7 +7,7 @@ BR                    = cfg_s.BR;
 cfg_s.M               = 4;          % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 30;         % valor de ebno para los graficos temporales/debugging
+cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
 % cfg_s.OVS           = 2;          % Sobremuestreo original
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
@@ -22,40 +23,41 @@ cfg_s.NTAPS_FIR       = 101;
 
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
-% --- Errores Estáticos y Estocásticos ---
+% Errores Estáticos y Estocásticos ---
 cfg_s.delta_freq      = 10e6;        % Offset del LO
 cfg_s.phase_offset    = 30/180*pi;  % Error de fase
 cfg_s.LW              = 0e3;       % Ancho de linea [Hz] -> Ruido de fase
-% --- Fluctuaciones y Tonos Interfirientes ---
+% Fluctuaciones
 cfg_s.freq_fluct_amp  = 0e6;
 cfg_s.freq_fluct_freq = 0e3;
 cfg_s.phase_tone_amp  = 0/180*pi;
 cfg_s.phase_tone_freq = 0e6;
+
 %% 4. Receptor (ecualizador y recuperador)
 cfg_s.NTAPS_ffe       = 51;
-% --- Parámetros de Convergencia (CMA y DD-LMS) ---
+% Parámetros de convergencia (CMA y DD-LMS) ---
 cfg_s.time_cma        = 50e3;       % tiempo del cma
 %cfg_s.time_cma       = cfg_s.Lsymbs + 1; % para probar solo el cma (sin fse)
 % cfg_s.R_CMA         = 13.2;       % cte de comparacion del cma usamos la de 16
 cfg_s.cma_step        = 1e-3;
 cfg_s.dd_step         = 1e-4;
 cfg_s.leak            = 0e-6;
-% --- Configuración del PLL (Carrier Recovery) ---
+% Configuración del PLL (Carrier Recovery) ---
 cfg_s.Kp              = 10e-3;      % Ganancia proporcional 
 cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
-% --- Habilitación de Bloques de Evaluación ---
+% Habilitación de evaluación
 cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
-cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
-% --- Herramientas de Debugging General ---
-cfg_s.en_debug_plots  = 1;          % Habilita bloque entero de debugging
+cfg_s.en_plots        = 1;          % Habilitar graficos temporales (Tx/Rx)
+cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
+% Herramientas de Debugging General ---
+cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
 cfg_s.debug_eye       = 0;          % Diagrama de ojo
 cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
-% --- Vectores para Curva BER ---
+% Vectores para Curva BER ---
 EbNo_BER              = 0:2:12;
 M_vec                 = [4 16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
@@ -88,6 +90,7 @@ ak_hat = o_rx.ak_hat;
 [ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
 o_data_rx.ber = ber;
 o_data_rx.errors = errors;
+
 %% DEBUGGING Y GRÁFICOS (Evaluación)
 % Debugging general: PSD, diagrama de ojo y constelacion
 if cfg_s.en_debug_plots
