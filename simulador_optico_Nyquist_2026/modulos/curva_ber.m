@@ -39,7 +39,7 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             o_rx = Receiver(o_canal, cfg_s, ak);
             
             % BER checker
-            guard = cfg_s.time_cma + 1000;
+            guard = cfg_s.time_cma + 10000;
 
             % Protección por si alguna simulación queda corta
             if cfg_s.Lsymbs <= 2*guard
