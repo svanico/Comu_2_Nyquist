@@ -42,11 +42,11 @@ cfg_s.dd_step         = 1e-4;
 cfg_s.leak            = 0e-6;
 % --- Configuración del PLL (Carrier Recovery) ---
 cfg_s.Kp              = 10e-3;      % Ganancia proporcional 
-cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral
+cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % --- Habilitación de Bloques de Evaluación ---
-cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
+cfg_s.en_plots_rx     = 0;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
 cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
 % --- Herramientas de Debugging General ---
@@ -86,6 +86,7 @@ o_rx = Receiver(i_rx,cfg_s,ak); % con pasarle solo ak esta ok
 y = o_rx.y;
 yk = o_rx.o_dws;
 ak_hat = o_rx.ak_hat;
+
 % Ber checker
 guard = cfg_s.time_cma + 1000;
 [ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, guard);

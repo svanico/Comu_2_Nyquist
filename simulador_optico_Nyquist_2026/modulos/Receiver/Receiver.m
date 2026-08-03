@@ -70,6 +70,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                                                 %antes: [x1 x2 x3 x4] ; después
                                                 %del shift: [x1 x1 x2 x3] ;
                                                 %después de meter muestra nueva: [x_new x1 x2 x3]
+
         ffe_out = htaps.'*buffer_filter;        %filtra
         
        if mod(idx,ovs_ffe)==0                  % calculo el resto, si da 0, continuo (downsampling)  
@@ -86,7 +87,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 step = cma_step;
                 
             else
-% 1. DEROTACIÓN (Fasor negativo)
+                % 1. DEROTACIÓN (Fasor negativo)
                 slicer_in = slicer_in_raw * exp(-1j * phase_acc);
                 
                 % 2. DECISIÓN (Slicer)
@@ -103,10 +104,10 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 phase_acc = phase_acc + loop_filter_out;
                 
                 % 6. CÁLCULO DE ERROR PARA LMS
-                error_base = slicer_in - slicer_out; 
+                % error_base = slicer_in - slicer_out; 
                 
                 % 7. REALIMENTACIÓN LMS (Multiplicado por fasor positivo/conjugado)
-                error = error_base * exp(1j * phase_acc); 
+                error =  (slicer_in - slicer_out) * exp(1j * phase_acc); 
                 step = dd_step;
             end
             
