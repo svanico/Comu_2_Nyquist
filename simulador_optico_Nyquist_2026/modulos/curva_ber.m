@@ -7,6 +7,14 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
     ber_sim = zeros(Nm, Ne);
     errors_sim = zeros(Nm, Ne);
     
+    % Flag para saber si se tiene que corregir ambiguedad del FCR
+    % OJO: si tu variable en el main no se llama en_fcr, cambiala aca
+    if isfield(cfg_s,'en_fcr')
+        usar_fcr = cfg_s.en_fcr;
+    else
+        usar_fcr = 0;
+    end
+
     % Orden de modulacion
     for m_idx = 1:Nm
         M_actual = M_vec(m_idx);
@@ -28,14 +36,59 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             o_canal = channel(i_canal, cfg_s);
             
             % Receptor
-            o_rx = Receiver(o_canal, cfg_s,ak);
+            o_rx = Receiver(o_canal, cfg_s, ak);
             
-            % Ber checker (Almacenamiento matricial)
+            % BER checker
+            guard = cfg_s.time_cma + 10000;
 
-            guard = cfg_s.time_cma + 1000;
+            % Protección por si alguna simulación queda corta
+            if cfg_s.Lsymbs <= 2*guard
+                warning('Lsymbs es chico respecto al guard. Puede quedar poca señal util para calcular BER.');
+            end
+            
+            % ---------------------------------------------------------
+            % Corrección de ambigüedad de fase del FCR
+            % ---------------------------------------------------------
+            % El FCR puede enganchar con una rotación global de la
+            % constelación. La constelación se ve bien, pero la BER da
+            % mal porque los símbolos quedan rotados respecto de ak.
+            %
+            % Probamos las 4 rotaciones posibles de QAM cuadrada:
+            % 0°, 90°, 180° y 270°.
+            % ---------------------------------------------------------
+            
+            rot_vec = [1, 1j, -1, -1j];
+            
+            ber_best = inf;
+            errors_best = inf;
+            rot_best = 1;
+            
+            fprintf('\n--- Correccion ambiguedad FCR | M = %d | Eb/No = %d dB ---\n', ...
+                    M_actual, cfg_s.EbNo);
+            
+            for r_idx = 1:length(rot_vec)
+            
+                ak_hat_rot = o_rx.ak_hat * rot_vec(r_idx);
+            
+                [ber_tmp, errors_tmp] = BER_checker(ak_hat_rot, ak, cfg_s.M, guard);
+            
+                fprintf('Rotacion %d | rot = %s | BER = %.3e | Errores = %d\n', ...
+                        r_idx, num2str(rot_vec(r_idx)), ber_tmp, errors_tmp);
+            
+                if ber_tmp < ber_best
+                    ber_best = ber_tmp;
+                    errors_best = errors_tmp;
+                    rot_best = rot_vec(r_idx);
+                end
+            
+            end
+            
+            ber = ber_best;
+            errors = errors_best;
 
-            [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, guard);   %Ese último 0 significa que no estás usando guardia, o sea contás también los símbolos iniciales donde el LMS todavía está aprendiendo
-
+fprintf('Mejor rotacion elegida: %s | BER final = %.3e | Errores = %d\n', ...
+        num2str(rot_best), ber, errors);
+            
             ber_sim(m_idx, idx)    = ber;
             errors_sim(m_idx, idx) = errors;
             
