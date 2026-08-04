@@ -18,6 +18,11 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
 
             cfg_s.EbNo   = EbNo_BER(idx);
             cfg_s.Lsymbs = L_vec(idx);
+
+            cfg_s.t1_rfd    = fix(0.10 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
+            cfg_s.t2_fcr_v4 = fix(0.20 * cfg_s.Lsymbs); % Pasa a Etapa 3 (Prende Fase Ciega)
+            cfg_s.t3_fcr_dd = fix(0.35 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
+            cfg_s.t4_ffe_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS);
             
             % Transmisor
             o_tx_s = transmisor_QAM(cfg_s);
@@ -32,9 +37,10 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             
             % Ber checker (Almacenamiento matricial)
 
-            guard = cfg_s.time_cma + 1000;
+            N      = length(o_rx);
+            guard  = fix(0.8*N);
 
-            [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, guard);   %Ese último 0 significa que no estás usando guardia, o sea contás también los símbolos iniciales donde el LMS todavía está aprendiendo
+            [ber, errors] = BER_checker(o_rx.ak_hat_fixed, o_rx.ak_tx_aligned, cfg_s.M,guard);
 
             ber_sim(m_idx, idx)    = ber;
             errors_sim(m_idx, idx) = errors;

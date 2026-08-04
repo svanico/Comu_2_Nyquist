@@ -1,5 +1,6 @@
 function [ber, n_errors] = BER_checker(data_v, ref_v, M, guard)
-
+    N      = length(data_v);
+    Ndisc =fix(0.8*N);
     data_v = data_v(:);
     ref_v  = ref_v(:); %fuerza que ambos sean columna
     

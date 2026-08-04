@@ -9,21 +9,20 @@ cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
 cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
-% cfg_s.OVS           = 2;          % Sobremuestreo original
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
 % Filtros transmisor
 cfg_s.NTAPS_RRC       = 101;  
 %% 2. Canal y ruido
-cfg_s.en_ch_filter    = 1;          % Habilita fir del canal
+cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.NTAPS_FIR       = 101;
 
 %% 3. Errores de portadora
-cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
-% Errores Estáticos y Estocásticos ---
+cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
+% Errores Estáticos 
 cfg_s.delta_freq      = 10e6;        % Offset del LO
 cfg_s.phase_offset    = 30/180*pi;  % Error de fase
 cfg_s.LW              = 0e3;       % Ancho de linea [Hz] -> Ruido de fase
@@ -33,25 +32,31 @@ cfg_s.freq_fluct_freq = 0e3;
 cfg_s.phase_tone_amp  = 0/180*pi;
 cfg_s.phase_tone_freq = 0e6;
 
-%% 4. Receptor (ecualizador y recuperador)
-cfg_s.NTAPS_ffe       = 51;
-% Parámetros de convergencia (CMA y DD-LMS) ---
-cfg_s.time_cma        = 50e3;       % tiempo del cma
-%cfg_s.time_cma       = cfg_s.Lsymbs + 1; % para probar solo el cma (sin fse)
-% cfg_s.R_CMA         = 13.2;       % cte de comparacion del cma usamos la de 16
-cfg_s.cma_step        = 1e-3;
-cfg_s.dd_step         = 1e-4;
-cfg_s.leak            = 0e-6;
-% Configuración del PLL (Carrier Recovery) ---
-cfg_s.Kp              = 10e-3;      % Ganancia proporcional 
-cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral
+%% 4. Receptor (Ecualizador y Recuperador de Portadora)
+
+% Parámetros del Ecualizador (FFE)
+cfg_s.NTAPS_ffe       = 51;             % Cantidad de coeficientes del ecualizador
+cfg_s.cma_step        = 1e-3;           % Paso de adaptación para convergencia ciega
+cfg_s.dd_step         = 1e-4;           % Paso de adaptación para seguimiento fino
+cfg_s.leak            = 0e-6;           % Factor de pérdida (leakage)
+
+% Parámetros del PLL y RFD
+cfg_s.Kp              = 10e-3;          % Ganancia proporcional del PLL
+cfg_s.Ki              = cfg_s.Kp/500;  % Ganancia integral del PLL
+cfg_s.rfd_gain        = 1e-3;           % Magnitud del "patadón" de frecuencia del RFD
+
+% Timers (FSM RX)
+cfg_s.t1_rfd    = fix(0.10 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
+cfg_s.t2_fcr_v4 = fix(0.20 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
+cfg_s.t3_fcr_dd = fix(0.35 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
+cfg_s.t4_ffe_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
-% Habilitación de evaluación
+% Habilitaciones
 cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
-cfg_s.en_plots        = 1;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
-% Herramientas de Debugging General ---
+cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
+cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
+% Debugging general ---
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
 cfg_s.debug_eye       = 0;          % Diagrama de ojo
@@ -64,11 +69,11 @@ M_vec                 = [4 16];
 L_vec                 = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 
 %% EJECUCIÓN PRINCIPAL DEL SISTEMA
-% Llamada a la función superior de simulación (BER en cascada)
+
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
-% Config bloques individuales (Transmisión única)
+% Config bloques individuales
 % Transmisor
 o_tx_s = struct();
 o_tx_s = transmisor_QAM(cfg_s);
@@ -79,19 +84,22 @@ rrc    = o_tx_s.rrc;
 % Canal
 i_canal = o_tx;
 o_canal = channel(i_canal,cfg_s);
+
 % Receptor
 i_rx = o_canal;
-o_rx = struct();
-o_rx = Receiver(i_rx,cfg_s,ak); % con pasarle solo ak esta ok
+o_rx = Receiver(i_rx,cfg_s,ak); 
+
 y = o_rx.y;
 yk = o_rx.o_dws;
-ak_hat = o_rx.ak_hat;
-% Ber checker
-[ber,errors]  = BER_checker(ak_hat,ak, cfg_s.M, 0);
+ak_hat = o_rx.ak_hat_fixed;       %Símbolos ya pasados por el Cycle Slip Corrector
+ak_aligned = o_rx.ak_tx_aligned;  
+
+% 2. Ber checker
+[ber,errors]  = BER_checker(ak_hat, ak_aligned, cfg_s.M,0);
 o_data_rx.ber = ber;
 o_data_rx.errors = errors;
 
-%% DEBUGGING Y GRÁFICOS (Evaluación)
+%% DEBUGGING Y GRÁFICOS
 % Debugging general: PSD, diagrama de ojo y constelacion
 if cfg_s.en_debug_plots
     % OVS = cfg_s.OVS;
@@ -314,9 +322,7 @@ if  cfg_s.en_plots_rx
     ylabel('Amplitud (Q)');
     title('Diagrama de Ojo Ecualizado (Steady-State) - Rama Q');
 
-    % =========================================================================
-    % PANEL 2: ANÁLISIS DE RECUPERACIÓN DE PORTADORA (FCR / PLL)
-    % =========================================================================
+    %% ANÁLISIS DE RECUPERACIÓN DE PORTADORA (FCR / PLL)
     figure('Name', 'Desempeño del FCR (PLL)', 'Color', 'w', 'Position', [150, 150, 1000, 600]);
     sgtitle('Dinámica del Lazo de Recuperación de Portadora', 'FontSize', 15, 'FontWeight', 'bold');
 

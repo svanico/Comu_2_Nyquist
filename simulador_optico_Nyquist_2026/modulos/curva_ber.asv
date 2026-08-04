@@ -18,6 +18,10 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
 
             cfg_s.EbNo   = EbNo_BER(idx);
             cfg_s.Lsymbs = L_vec(idx);
+
+            cfg_s.time_cma     = fix(0.2 * cfg_s.Lsymbs);
+            cfg_s.time_rfd_off = fix(0.40 * cfg_s.Lsymbs);
+            cfg_s.time_dpll_dd = fix(0.55 * cfg_s.Lsymbs);
             
             % Transmisor
             o_tx_s = transmisor_QAM(cfg_s);
@@ -28,10 +32,15 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             o_canal = channel(i_canal, cfg_s);
             
             % Receptor
-            o_rx = Receiver(o_canal, cfg_s);
+            o_rx = Receiver(o_canal, cfg_s,ak);
             
             % Ber checker (Almacenamiento matricial)
-            [ber, errors] = BER_checker(o_rx.ak_hat, ak, cfg_s.M, 0);
+
+            N      = length(o_rx);
+            guard  = fix(0.8*N);
+
+            [ber, errors] = BER_checker(o_rx.ak_hat_fixed, o_rx.ak_tx_aligned, cfg_s.M,0);
+
             ber_sim(m_idx, idx)    = ber;
             errors_sim(m_idx, idx) = errors;
             

@@ -1,7 +1,7 @@
 function [ber, n_errors] = BER_checker(data_v, ref_v, M, guard)
 
-    data_v = data_v(:);
-    ref_v  = ref_v(:); %fuerza que ambos sean columna
+    data_v = data_v(:); %toma los últimos valores
+    ref_v  = ref_v(:); 
     
     %--------------------------%
     %           ERRORS
