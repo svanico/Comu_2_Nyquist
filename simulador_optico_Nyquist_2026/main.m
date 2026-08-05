@@ -43,12 +43,15 @@ cfg_s.leak            = 0e-6;
 % --- Configuración del PLL (Carrier Recovery) ---
 cfg_s.Kp              = 10e-3;      % Ganancia proporcional 
 cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral
+% --- Configuración del RFD ---
+cfg_s.rfd_gain = 1e-3;
+
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % --- Habilitación de Bloques de Evaluación ---
 cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
+cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 % --- Herramientas de Debugging General ---
 cfg_s.en_debug_plots  = 1;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
@@ -177,6 +180,7 @@ if cfg_s.en_debug_plots
         legend('Location','best');
     end
 end
+
 % Debugging Receiver
 if  cfg_s.en_plots_rx
     
@@ -184,6 +188,7 @@ if  cfg_s.en_plots_rx
     error_log = o_rx.error_log;
     htaps = o_rx.htaps;
     slicer_in_log = o_rx.slicer_in_log;
+    acc_log = o_rx.acc_log;
     ovs_ffe = o_rx.ovs_ffe;
     
     fprintf('\n--- Análisis de Convergencia del Ecualizador ---\n');
@@ -320,13 +325,40 @@ if  cfg_s.en_plots_rx
     figure('Name', 'Desempeño del FCR (PLL)', 'Color', 'w', 'Position', [150, 150, 1000, 600]);
     sgtitle('Dinámica del Lazo de Recuperación de Portadora', 'FontSize', 15, 'FontWeight', 'bold');
 
-    % 1. Evolución de la Fase Acumulada
+    % % 1. Evolución de la Fase Acumulada
+    % subplot(2, 2, 1);
+    % plot(o_rx.phase_acc_log, 'LineWidth', 1.5, 'Color', '#77AC30');
+    % grid on; box on;
+    % xlabel('Muestras Logueadas (x10 Símbolos)', 'FontWeight', 'bold'); 
+    % ylabel('Fase Acumulada [rad]', 'FontWeight', 'bold');
+    % title('Trayectoria de Fase del NCO');
+
+
+
+    % 1. Evolución de la rama integral del DPLL
     subplot(2, 2, 1);
-    plot(o_rx.phase_acc_log, 'LineWidth', 1.5, 'Color', '#77AC30');
-    grid on; box on;
-    xlabel('Muestras Logueadas (x10 Símbolos)', 'FontWeight', 'bold'); 
-    ylabel('Fase Acumulada [rad]', 'FontWeight', 'bold');
-    title('Trayectoria de Fase del NCO');
+    
+    freq_acc_MHz = acc_log * cfg_s.BR / (2*pi) / 1e6;
+    
+    plot(freq_acc_MHz, 'LineWidth', 1.5);
+    hold on;
+    
+    yline(cfg_s.delta_freq/1e6, 'k--', ...
+        'Offset inyectado', ...
+        'LineWidth', 1.5);
+    
+    grid on;
+    box on;
+    hold off;
+    
+    xlabel('Muestras logueadas (x10 símbolos)', ...
+        'FontWeight', 'bold');
+    
+    ylabel('Rama integral [MHz]', ...
+        'FontWeight', 'bold');
+    
+    title('Rama integral del DPLL');
+
 
     % 2. Estimación de Frecuencia (Derivada de la fase)
     subplot(2, 2, 2);
@@ -342,7 +374,7 @@ if  cfg_s.en_plots_rx
     
     plot(freq_est_smooth / 1e6, 'LineWidth', 1.5, 'Color', '#A2142F');
     hold on;
-    yline(cfg_s.delta_freq / 1e6, 'k--', 'Offset Inyectado (\Delta f)', 'LineWidth', 1.5, 'LabelHorizontalAlignment', 'left');
+    yline(cfg_s.delta_freq / 1e6, 'k--', 'Offset Inyectado (\Delta f)', 'LineWidth', 1.5, 'LabelHorizontalAlignment', 'center');
     grid on; box on; hold off;
     xlabel('Muestras Logueadas', 'FontWeight', 'bold'); 
     ylabel('Desvío de Frecuencia [MHz]', 'FontWeight', 'bold');

@@ -86,7 +86,7 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             ber = ber_best;
             errors = errors_best;
 
-fprintf('Mejor rotacion elegida: %s | BER final = %.3e | Errores = %d\n', ...
+        fprintf('Mejor rotacion elegida: %s | BER final = %.3e | Errores = %d\n', ...
         num2str(rot_best), ber, errors);
             
             ber_sim(m_idx, idx)    = ber;

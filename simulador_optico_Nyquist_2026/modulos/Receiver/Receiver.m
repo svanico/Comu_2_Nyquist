@@ -50,15 +50,24 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     htaps = zeros(NTAPS_ffe,1);
     htaps(floor(NTAPS_ffe/2)-1) = 1;            %Impulso
     buffer_filter = zeros(NTAPS_ffe,1);         %BUFFER para la señal recibida
-    phase_integral = 0;
-    phase_acc = 0; % Equivale al nco_output
+
+
+    % Variables del DPLL
+    e = 0;          % Error del detector de fase
+    acc = 0;        % Rama integral
+    nco_in = 0;     % Entrada/incremento del NCO
+    nco_out = 0;    % Fase acumulada utilizada para derotar
+
 
     %%Variables to logging
     ffe_out_log = zeros(ceil(Lsymbs*ovs_ffe/FRAME_LOG_2x),1);
-    error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
+    ffe_error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
+    fcr_error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
     slicer_in_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
-    phase_acc_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
-    
+    acc_log       = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
+    nco_out_log   = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
+
+
     % PREASIGNACIÓN DE ARREGLOS DE DECISIÓN
     N_symbs_rx = ceil(length(agc_out) / ovs_ffe); %cantidad de simbolos recibidos
     ak_hat_arr = zeros(N_symbs_rx, 1);
@@ -81,32 +90,33 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
             if idx_new < time_cma                 
                 slicer_in = slicer_in_raw;          % Pasa directo, sin rotar
                 slicer_out = slicer(slicer_in, M);  % Solo para guardarlo en arreglos
-                
-                error = slicer_in*(abs(slicer_in).^2 - R_CMA); 
+                                
+                ffe_error = slicer_in*(abs(slicer_in).^2 - R_CMA);
                 step = cma_step;
-                
+                                
             else
-% 1. DEROTACIÓN (Fasor negativo)
-                slicer_in = slicer_in_raw * exp(-1j * phase_acc);
+                % 1. DEROTACIÓN con la fase acumulada del NCO
+                slicer_in = slicer_in_raw * exp(-1j*nco_out);
                 
-                % 2. DECISIÓN (Slicer)
-                slicer_out = slicer(slicer_in, M);   
+                % 2. DECISIÓN
+                slicer_out = slicer(slicer_in, M);
                 
-                % 3. DETECTOR DE ERROR DE FASE (PED)
-                phase_error = angle(slicer_in * conj(slicer_out));
+                % 3. ERROR DE FASE DEL DPLL
+                e = angle(slicer_in * conj(slicer_out));
                 
-                % 4. FILTRO DE LAZO (Loop Filter PI)
-                phase_integral = phase_integral + Ki * phase_error;
-                loop_filter_out = (Kp * phase_error) + phase_integral;
+                % 4. FILTRO PI
+                acc = acc + Ki*e;
+                nco_in = acc + Kp*e;
                 
-                % 5. ACUMULADOR DE FASE DEL NCO (Suma para el próximo símbolo)
-                phase_acc = phase_acc + loop_filter_out;
+                % 5. ACUMULADOR DE FASE DEL NCO
+                nco_out = nco_out + nco_in;
                 
-                % 6. CÁLCULO DE ERROR PARA LMS
-                error_base = slicer_in - slicer_out; 
+                % 6. ERROR DE DECISIÓN PARA EL DD-LMS
+                dd_error = slicer_in - slicer_out;
                 
-                % 7. REALIMENTACIÓN LMS (Multiplicado por fasor positivo/conjugado)
-                error = error_base * exp(1j * phase_acc); 
+                % 7. ERROR DEL FFE REFERIDO A LA FASE ANTES DEL DPLL
+                ffe_error = dd_error * exp(1j*nco_out);
+                
                 step = dd_step;
             end
             
@@ -115,14 +125,19 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
             o_dws_arr(idx_new)  = slicer_in;
         
             % ACTUALIZACIÓN ADAPTATIVA DEL FILTRO (CMA o LMS según la etapa)
-            htaps = (1-leak)*htaps - step*error*conj(buffer_filter);    
-            
+            htaps = (1-leak)*htaps - step*ffe_error*conj(buffer_filter);
+
             % LOGGING A TASA 1x (Decimado)
             if mod(idx_new,FRAME_LOG_1x)==0     
-                idx_log = idx_new/FRAME_LOG_1x;         % Índice ajustado para los arreglos
-                error_log(idx_log) = error;         
-                slicer_in_log(idx_log) = slicer_in; 
-                phase_acc_log(idx_log) = phase_acc;     % Guardamos la fase del NCO
+                idx_log = idx_new/FRAME_LOG_1x;
+            
+                ffe_error_log(idx_log) = ffe_error;
+                fcr_error_log(idx_log) = e;
+            
+                slicer_in_log(idx_log) = slicer_in;
+            
+                acc_log(idx_log) = acc;
+                nco_out_log(idx_log) = nco_out;
             end
         end
         if mod(idx,FRAME_LOG_2x)==0     
@@ -136,17 +151,45 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     o_data_rx.ak_hat = ak_hat_arr;
     o_data_rx.o_dws  = o_dws_arr;
     
-    % 2. Cálculo del Error Cuadrático Medio (MSE) final
-    ventana_evaluacion = min(10000, length(error_log) - 1); 
-    MSE = 10 * log10(mean(abs(error_log(end - ventana_evaluacion : end)).^2));
-    o_data_rx.MSE = MSE;
+    % % 2. Cálculo del Error Cuadrático Medio (MSE) final
+    % ventana_evaluacion = min(10000, length(error_log) - 1); 
+    % MSE = 10 * log10(mean(abs(error_log(end - ventana_evaluacion : end)).^2));
+    % o_data_rx.MSE = MSE;
+    % 
+    % % 3. Variables de diagnóstico 
+    % o_data_rx.error_log = error_log;
+    % o_data_rx.slicer_in_log = slicer_in_log;
+    % o_data_rx.phase_acc_log = phase_acc_log;
+    % o_data_rx.htaps = htaps;
+    % o_data_rx.ffe_out_log = ffe_out_log;
+    % o_data_rx.ovs_ffe = ovs_ffe; % Necesario para graficar frecuencias en el main
 
-    % 3. Variables de diagnóstico 
-    o_data_rx.error_log = error_log;
+    % 2. Cálculo del Error Cuadrático Medio (MSE) final
+    ventana_evaluacion = min(10000, length(ffe_error_log) - 1);
+    
+    MSE = 10 * log10(mean(abs( ...
+        ffe_error_log(end - ventana_evaluacion : end)).^2));
+    
+    o_data_rx.MSE = MSE;
+    
+    % 3. Variables de diagnóstico
+    
+    % Ecualizador
+    o_data_rx.error_log = ffe_error_log;
+    o_data_rx.ffe_error_log = ffe_error_log;
+    
+    % DPLL
+    o_data_rx.fcr_error_log = fcr_error_log;
+    o_data_rx.acc_log = acc_log;
+    o_data_rx.nco_out_log = nco_out_log;
+    
+    % Lo conservamos con este nombre para no romper el main actual
+    o_data_rx.phase_acc_log = nco_out_log;
+    
+    % Otras variables
     o_data_rx.slicer_in_log = slicer_in_log;
-    o_data_rx.phase_acc_log = phase_acc_log;
     o_data_rx.htaps = htaps;
     o_data_rx.ffe_out_log = ffe_out_log;
-    o_data_rx.ovs_ffe = ovs_ffe; % Necesario para graficar frecuencias en el main
+    o_data_rx.ovs_ffe = ovs_ffe;
 
 end
