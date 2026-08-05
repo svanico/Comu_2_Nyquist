@@ -33,16 +33,21 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     
     % Anillos para identificar símbolos QPSK
     % (Para 16-QAM, separa el anillo interno y las esquinas externas)
-    if M == 16
-        const_pts = qammod(0:M-1, M); 
-        radii = unique(round(abs(const_pts)*1e4)/1e4); % [1.414, 3.162, 4.242]
-        th_low = (radii(1) + radii(2))/2;
-        th_high = (radii(2) + radii(3))/2;
-    elseif M == 4
-        th_low = inf; th_high = -inf; % En QPSK todos los símbolos sirven
-    else
-        th_low = 0; th_high = 0; % Deshabilita RFD para otras modulaciones
-    end
+    % if M == 16
+    %     const_pts = qammod(0:M-1, M); 
+    %     radii = unique(round(abs(const_pts)*1e4)/1e4); % [1.414, 3.162, 4.242]
+    %     th_low = (radii(1) + radii(2))/2;
+    %     th_high = (radii(2) + radii(3))/2;
+    % elseif M == 4
+    %     th_low = inf; th_high = -inf; % En QPSK todos los símbolos sirven
+    % else
+    %     th_low = 0; th_high = 0; % Deshabilita RFD para otras modulaciones
+    % end
+
+
+    th_low = (sqrt(2) + sqrt(10) )/2;
+    th_high = (sqrt(10) + sqrt(18) )/2;
+
 
     Ki = i_cfg_s.Ki;
     Kp = i_cfg_s.Kp;
@@ -121,7 +126,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                              rfd_gain_value = -sign(diff_angle) * rfd_gain;
                          end
                     end
-                    last_angle = angle_curr; last_detection = 1;
+                    last_angle = angle_curr; 
+                    last_detection = 1;
                 else
                     last_detection = 0;
                 end
@@ -141,6 +147,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                     last_angle = angle_curr; last_detection = 1;
                 else
                     last_detection = 0;
+                    rfd_gain_value = 0;
                 end
                 
             elseif idx_new < t4_ffe_dd
@@ -208,10 +215,10 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     s_in_cs = struct();
     s_in_cs.data_receive = o_dws_aligned;
     s_in_cs.stx = ak_aligned;
-    s_in_cs.WINDOW_LEN = 500; 
+    s_in_cs.WINDOW_LEN = 50; 
     s_in_cs.M = M;
     
-    s_out_cs = dinamic_CS_corrector(s_in_cs);
+    [s_out_cs] = dinamic_CS_corrector(s_in_cs);
     
     ak_tx_aligned_trunc = ak_aligned(1 : length(s_out_cs.orx_cs_fixed));
 

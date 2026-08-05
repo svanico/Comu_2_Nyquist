@@ -38,7 +38,8 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             % Ber checker (Almacenamiento matricial)
 
             N      = length(o_rx);
-            guard  = fix(0.8*N);
+            guard  = fix(0.5*N);
+            
 
             [ber, errors] = BER_checker(o_rx.ak_hat_fixed, o_rx.ak_tx_aligned, cfg_s.M,guard);
 

@@ -1,4 +1,4 @@
-%clear; clc; close all;
+% clear; clc; close all;
 
 %% 1. Parámetros generales
 cfg_s = struct();
@@ -12,8 +12,7 @@ cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
-% Filtros transmisor
-cfg_s.NTAPS_RRC       = 101;  
+cfg_s.NTAPS_RRC       = 101;        % Filtros transmisor
 %% 2. Canal y ruido
 cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
@@ -46,10 +45,10 @@ cfg_s.Ki              = cfg_s.Kp/500;  % Ganancia integral del PLL
 cfg_s.rfd_gain        = 1e-3;           % Magnitud del "patadón" de frecuencia del RFD
 
 % Timers (FSM RX)
-cfg_s.t1_rfd    = fix(0.10 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
-cfg_s.t2_fcr_v4 = fix(0.20 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
-cfg_s.t3_fcr_dd = fix(0.35 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
-cfg_s.t4_ffe_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
+cfg_s.t1_rfd    = fix(0.15 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
+cfg_s.t2_fcr_v4 = fix(0.25 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
+cfg_s.t3_fcr_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
+cfg_s.t4_ffe_dd = fix(0.65 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % Habilitaciones
@@ -63,10 +62,10 @@ cfg_s.debug_eye       = 0;          % Diagrama de ojo
 cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 % Vectores para Curva BER ---
-EbNo_BER              = 0:2:12;
-M_vec                 = [4 16];
+EbNo_BER              = 0:2:14;
+M_vec                 = [16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
-L_vec                 = [2e5 2e5 2e5 5e5 1e6 1e6 1e6 1e6 1e6]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
+L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 
 %% EJECUCIÓN PRINCIPAL DEL SISTEMA
 
