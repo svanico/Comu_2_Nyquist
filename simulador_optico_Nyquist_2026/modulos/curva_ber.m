@@ -37,8 +37,8 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             
             % Ber checker (Almacenamiento matricial)
 
-            N      = length(o_rx);
-            guard  = fix(0.5*N);
+            % N      = length(o_rx);
+            guard  = 0;%fix(0.5*N);
             
 
             [ber, errors] = BER_checker(o_rx.ak_hat_fixed, o_rx.ak_tx_aligned, cfg_s.M,guard);
@@ -47,8 +47,12 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             errors_sim(m_idx, idx) = errors;
             
             % Mostrar progreso por consola
-            fprintf('M = %2d | Eb/No = %2d dB | BER = %e | Errores = %d\n', ...
-                    M_actual, cfg_s.EbNo, ber, errors);
+            % fprintf('M = %2d | Eb/No = %2d dB | BER = %e | Errores = %d\n', ...
+            %         M_actual, cfg_s.EbNo, ber, errors);
+
+            fprintf(['M = %2d | Eb/No = %2d dB | BER = %e | ' ...
+         'Errores = %d | MSE = %.2f dB\n'], ...
+        M_actual, cfg_s.EbNo, ber, errors, o_rx.MSE);
         end
     end
     

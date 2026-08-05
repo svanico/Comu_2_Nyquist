@@ -7,7 +7,7 @@ BR                    = cfg_s.BR;
 cfg_s.M               = 4;          % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales/debugging
+cfg_s.EbNo            = 10;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
@@ -54,7 +54,7 @@ cfg_s.t4_ffe_dd = fix(0.65 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 % Habilitaciones
 cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
+cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 % Debugging general ---
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
@@ -65,8 +65,8 @@ cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 EbNo_BER              = 0:2:14;
 M_vec                 = [16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
-L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
-
+% L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
+L_vec = 1e6 * ones(size(EbNo_BER));
 %% EJECUCIÓN PRINCIPAL DEL SISTEMA
 
 if cfg_s.en_curva_ber

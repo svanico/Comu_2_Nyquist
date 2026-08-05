@@ -33,16 +33,21 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     
     % Anillos para identificar símbolos QPSK
     % (Para 16-QAM, separa el anillo interno y las esquinas externas)
-    if M == 16
-        const_pts = qammod(0:M-1, M); 
-        radii = unique(round(abs(const_pts)*1e4)/1e4); % [1.414, 3.162, 4.242]
-        th_low = (radii(1) + radii(2))/2;
-        th_high = (radii(2) + radii(3))/2;
-    elseif M == 4
-        th_low = inf; th_high = -inf; % En QPSK todos los símbolos sirven
-    else
-        th_low = 0; th_high = 0; % Deshabilita RFD para otras modulaciones
-    end
+    % if M == 16
+    %     const_pts = qammod(0:M-1, M); 
+    %     radii = unique(round(abs(const_pts)*1e4)/1e4); % [1.414, 3.162, 4.242]
+    %     th_low = (radii(1) + radii(2))/2;
+    %     th_high = (radii(2) + radii(3))/2;
+    % elseif M == 4
+    %     th_low = inf; th_high = -inf; % En QPSK todos los símbolos sirven
+    % else
+    %     th_low = 0; th_high = 0; % Deshabilita RFD para otras modulaciones
+    % end
+
+
+    th_low = (sqrt(2) + sqrt(10) )/2;
+    th_high = (sqrt(10) + sqrt(18) )/2;
+
 
     Ki = i_cfg_s.Ki;
     Kp = i_cfg_s.Kp;
@@ -80,7 +85,9 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
     slicer_in_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
     phase_acc_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
-    
+    phase_integral_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
+
+
     N_symbs_rx = ceil(length(agc_out) / ovs_ffe); %cantidad de simbolos recibidos
     ak_hat_arr = zeros(N_symbs_rx, 1);
     o_dws_arr  = zeros(N_symbs_rx, 1);
@@ -121,7 +128,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                              rfd_gain_value = -sign(diff_angle) * rfd_gain;
                          end
                     end
-                    last_angle = angle_curr; last_detection = 1;
+                    last_angle = angle_curr; 
+                    last_detection = 1;
                 else
                     last_detection = 0;
                 end
@@ -141,6 +149,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                     last_angle = angle_curr; last_detection = 1;
                 else
                     last_detection = 0;
+                    rfd_gain_value = 0;
                 end
                 
             elseif idx_new < t4_ffe_dd
@@ -180,7 +189,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 idx_log = idx_new/FRAME_LOG_1x;         
                 error_log(idx_log) = error;         
                 slicer_in_log(idx_log) = slicer_in; 
-                phase_acc_log(idx_log) = phase_acc;     
+                phase_acc_log(idx_log) = phase_acc; 
+                phase_integral_log(idx_log) = phase_integral;
             end
 
         end
@@ -208,12 +218,77 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     s_in_cs = struct();
     s_in_cs.data_receive = o_dws_aligned;
     s_in_cs.stx = ak_aligned;
-    s_in_cs.WINDOW_LEN = 500; 
+    s_in_cs.WINDOW_LEN = 50; 
     s_in_cs.M = M;
     
-    s_out_cs = dinamic_CS_corrector(s_in_cs);
+    [s_out_cs] = dinamic_CS_corrector(s_in_cs);
     
     ak_tx_aligned_trunc = ak_aligned(1 : length(s_out_cs.orx_cs_fixed));
+
+
+    %% ---------------- CHEQUEO DE BER DEL RECEPTOR ----------------
+
+% Salida del slicer alineada con los símbolos transmitidos
+ak_hat_aligned = ak_hat_arr(1 + guard + alig_delay : end);
+
+% Nos aseguramos de comparar vectores de igual longitud
+N_eval = min(length(ak_aligned), length(ak_hat_aligned));
+
+ak_ref_eval = ak_aligned(1:N_eval);
+ak_hat_eval = ak_hat_aligned(1:N_eval);
+
+% Bits transmitidos y detectados antes del corrector de cycle slip
+% Demodulación a bits para calcular BER
+Bref_bits = qamdemod(ak_ref_eval, M, 'OutputType', 'bit');
+Bhat_rx_bits = qamdemod(ak_hat_eval, M, 'OutputType', 'bit');
+
+BER_rx = sum(Bhat_rx_bits(:) ~= Bref_bits(:)) / numel(Bref_bits);
+
+% Demodulación a índices de símbolo para calcular SER
+Bref_sym = qamdemod(ak_ref_eval, M);
+Bhat_rx_sym = qamdemod(ak_hat_eval, M);
+
+SER_rx = mean(Bhat_rx_sym(:) ~= Bref_sym(:));
+
+
+% Bits después del corrector de cycle slip
+N_eval_cs = min(length(ak_tx_aligned_trunc), ...
+                length(s_out_cs.orx_cs_fixed));
+
+% Forzamos ambas señales a vectores columna
+ak_ref_cs = ak_tx_aligned_trunc(1:N_eval_cs);
+ak_ref_cs = ak_ref_cs(:);
+
+ak_hat_cs = s_out_cs.orx_cs_fixed(1:N_eval_cs);
+ak_hat_cs = ak_hat_cs(:);
+
+% Demodulación a bits para calcular BER
+Bref_cs_bits = qamdemod(ak_ref_cs, M, 'OutputType', 'bit');
+Bhat_cs_bits = qamdemod(ak_hat_cs, M, 'OutputType', 'bit');
+
+BER_rx_cs = sum(Bhat_cs_bits(:) ~= Bref_cs_bits(:)) / ...
+            numel(Bref_cs_bits);
+
+% Demodulación a índices de símbolo para calcular SER
+Bref_cs_sym = qamdemod(ak_ref_cs, M);
+Bhat_cs_sym = qamdemod(ak_hat_cs, M);
+
+SER_rx_cs = mean(Bhat_cs_sym(:) ~= Bref_cs_sym(:));
+
+%% FINAL PRINTS
+fprintf('--------------------------------------------\n');
+fprintf(' BER salida del receptor = %.4e   (SER = %.4e)\n', ...
+        BER_rx, SER_rx);
+
+fprintf(' BER receptor + CS fix   = %.4e   (SER = %.4e)\n', ...
+        BER_rx_cs, SER_rx_cs);
+
+fprintf(' Simbolos evaluados      = %d\n', N_eval);
+fprintf(' Simbolos evaluados CS   = %d\n', N_eval_cs);
+fprintf('--------------------------------------------\n');
+
+
+
 
 %% Variables para el main
     % 1. Salidas principales
@@ -222,16 +297,59 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     o_data_rx.ak_tx_aligned = ak_tx_aligned_trunc;   
     o_data_rx.o_dws  = o_dws_arr;
     
-    % 2. Cálculo del Error Cuadrático Medio (MSE) final
-    ventana_evaluacion = min(10000, length(error_log) - 1); 
-    MSE = 10 * log10(mean(abs(error_log(end - ventana_evaluacion : end)).^2));
-    o_data_rx.MSE = MSE;
+    % % 2. Cálculo del Error Cuadrático Medio (MSE) final
+    % ventana_evaluacion = min(10000, length(error_log) - 1); 
+    % MSE = 10 * log10(mean(abs(error_log(end - ventana_evaluacion : end)).^2));
+    % o_data_rx.MSE = MSE;
+
+    % MSE normalizado entre la salida corregida y los símbolos transmitidos
+    rx_mse = s_out_cs.orx_cs_fixed(:);
+    tx_mse = ak_tx_aligned_trunc(:);
+    
+    N_mse = min(length(rx_mse), length(tx_mse));
+    
+    rx_mse = rx_mse(1:N_mse);
+    tx_mse = tx_mse(1:N_mse);
+    
+    mse_norm = mean(abs(rx_mse - tx_mse).^2) / ...
+               mean(abs(tx_mse).^2);
+    
+    o_data_rx.MSE = 10*log10(max(mse_norm, eps));
     
     % 3. Variables de debug
     o_data_rx.error_log = error_log;
     o_data_rx.slicer_in_log = slicer_in_log;
     o_data_rx.phase_acc_log = phase_acc_log;
+    o_data_rx.phase_integral_log = phase_integral_log;
     o_data_rx.htaps = htaps;
     o_data_rx.ffe_out_log = ffe_out_log;
     o_data_rx.ovs_ffe = ovs_ffe; 
+
+
+
+    %% Gráfico de la rama integral del PLL
+if i_cfg_s.en_plots_rx
+
+    N_log_pll = floor(N_symbs_rx / FRAME_LOG_1x);
+
+    phase_integral_plot = phase_integral_log(1:N_log_pll);
+
+    % La rama integral representa incremento de fase por símbolo.
+    % Multiplicando por BR/(2*pi) se convierte a frecuencia.
+    freq_est_MHz = phase_integral_plot .* BR ./ (2*pi) ./ 1e6;
+
+    symb_axis = (1:N_log_pll) .* FRAME_LOG_1x;
+
+    figure;
+    plot(symb_axis, freq_est_MHz, 'LineWidth', 2);
+    grid on;
+
+    xlabel('Símbolos', 'Interpreter', 'latex', 'FontSize', 12);
+    ylabel('Rama integral [MHz]', ...
+           'Interpreter', 'latex', 'FontSize', 12);
+
+    title('Estimación del offset de frecuencia', ...
+          'Interpreter', 'latex', 'FontSize', 12);
+end
+
 end

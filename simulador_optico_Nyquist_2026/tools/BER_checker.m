@@ -15,14 +15,14 @@ function [ber, n_errors] = BER_checker(data_v, ref_v, M, guard)
     %          PROCESS
     %--------------------------%
 
-    % Align and guard
-    alig_delay = finddelay(ref_v, data_v);
-    if alig_delay<0
-        alig_delay = 0;
-    end
+    % % % Align and guard
+    % % alig_delay = finddelay(ref_v, data_v);
+    % % if alig_delay<0
+    % %     alig_delay = 0;
+    % % end
     
-    ak_guard_v = ref_v(1+guard:end-alig_delay);             %El guard se usa para ignorar símbolos del principio y/o del final cuando calculás la BER, en caso de que la compensacion no este del todo bien (las curvas no den muy bien)
-    ak_hat_guard_v = data_v(1+guard+alig_delay:end);
+    ak_guard_v = ref_v(1+guard:end);             %El guard se usa para ignorar símbolos del principio y/o del final cuando calculás la BER, en caso de que la compensacion no este del todo bien (las curvas no den muy bien)
+    ak_hat_guard_v = data_v(1+guard:end);
     
     % QAM to bits
     ak_bit_v = qamdemod(ak_guard_v, M, 'OutputType', 'bit');
