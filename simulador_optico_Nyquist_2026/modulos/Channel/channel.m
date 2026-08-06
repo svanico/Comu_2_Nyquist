@@ -38,6 +38,23 @@ function [o_channel] = channel(i_channel, i_cfg_s)
         n = zeros(length(i_channel), 1);
     end
 
+    %% Chequeo de la SNR realmente inyectada
+    if en_n && isfield(i_cfg_s, 'debug_snr') && i_cfg_s.debug_snr
+    
+        Ps_medida = var(i_channel);
+        Pn_medida = var(n);
+    
+        SNR_medida_dB = 10*log10(Ps_medida / Pn_medida);
+    
+        SNR_objetivo_dB = EbNo ...
+                        + 10*log10(log2(M)) ...
+                        - 10*log10(OVS);
+    
+        fprintf([' SNR canal objetivo = %.3f dB | ' ...
+                 'SNR canal medida = %.3f dB\n'], ...
+                SNR_objetivo_dB, SNR_medida_dB);
+    end
+
     if en_ch
         b = fir1(NTAPS - 1, fc); 
         

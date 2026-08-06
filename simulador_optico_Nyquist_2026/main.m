@@ -1,18 +1,24 @@
 % clear; clc; close all;
-
+rng(1);
 %% 1. Parámetros generales
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
 BR                    = cfg_s.BR;   
-cfg_s.M               = 4;          % Orden de modulacion
+cfg_s.M               = 16;          % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 10;         % valor de ebno para los graficos temporales/debugging
+cfg_s.EbNo            = 4;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
 cfg_s.NTAPS_RRC       = 101;        % Filtros transmisor
+cfg_s.debug_snr       = 1;
+cfg_s.en_carrier_recovery = 0;   % Curva BER AWGN ideal
+% cfg_s.en_carrier_recovery = 1;   % Pruebas con offset de fase/frecuencia
+
+cfg_s.en_single_run = 0;
+
 %% 2. Canal y ruido
 cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
@@ -22,11 +28,11 @@ cfg_s.NTAPS_FIR       = 101;
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
 % Errores Estáticos 
-cfg_s.delta_freq      = 10e6;        % Offset del LO
-cfg_s.phase_offset    = 30/180*pi;  % Error de fase
+cfg_s.delta_freq      = 0;        % Offset del LO
+cfg_s.phase_offset    = 0/180*pi;  % Error de fase
 cfg_s.LW              = 0e3;       % Ancho de linea [Hz] -> Ruido de fase
 % Fluctuaciones
-cfg_s.freq_fluct_amp  = 0e6;
+cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 cfg_s.phase_tone_amp  = 0/180*pi;
 cfg_s.phase_tone_freq = 0e6;
@@ -42,19 +48,31 @@ cfg_s.leak            = 0e-6;           % Factor de pérdida (leakage)
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 10e-3;          % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500;  % Ganancia integral del PLL
-cfg_s.rfd_gain        = 1e-3;           % Magnitud del "patadón" de frecuencia del RFD
+cfg_s.rfd_gain        = 1e-4;           % Magnitud del "patadón" de frecuencia del RFD
 
 % Timers (FSM RX)
-cfg_s.t1_rfd    = fix(0.15 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
-cfg_s.t2_fcr_v4 = fix(0.25 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
-cfg_s.t3_fcr_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
-cfg_s.t4_ffe_dd = fix(0.65 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
+
+cfg_s.t1_rfd_frac    = 0.15;
+cfg_s.t2_fcr_v4_frac = 0.25;
+cfg_s.t3_fcr_dd_frac = 0.45;
+cfg_s.t4_ffe_dd_frac = 0.65;
+
+
+cfg_s.t1_rfd = fix(cfg_s.t1_rfd_frac * cfg_s.Lsymbs);% Pasa a Etapa 2 (Prende RFD)
+cfg_s.t2_fcr_v4 = fix(cfg_s.t2_fcr_v4_frac * cfg_s.Lsymbs);% Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
+cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs);% Pasa a Etapa 4 (FCR a DD, apaga RFD)
+cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
+
+% cfg_s.t1_rfd    = fix(0.15 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
+% cfg_s.t2_fcr_v4 = fix(0.25 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
+% cfg_s.t3_fcr_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
+% cfg_s.t4_ffe_dd = fix(0.65 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % Habilitaciones
-cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
+cfg_s.en_plots_rx     = 0;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
+cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
 % Debugging general ---
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
@@ -62,8 +80,8 @@ cfg_s.debug_eye       = 0;          % Diagrama de ojo
 cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 % Vectores para Curva BER ---
-EbNo_BER              = 0:2:14;
-M_vec                 = [16];
+EbNo_BER              = 0:2:12;
+M_vec                 = [4 16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
 % L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 L_vec = 1e6 * ones(size(EbNo_BER));
@@ -72,32 +90,42 @@ L_vec = 1e6 * ones(size(EbNo_BER));
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
-% Config bloques individuales
-% Transmisor
-o_tx_s = struct();
-o_tx_s = transmisor_QAM(cfg_s);
-ak     = o_tx_s.ak;
-ak_up  = o_tx_s.ak_ovs;
-o_tx   = o_tx_s.o_tx;
-rrc    = o_tx_s.rrc;
-% Canal
-i_canal = o_tx;
-o_canal = channel(i_canal,cfg_s);
 
-% Receptor
-i_rx = o_canal;
-o_rx = Receiver(i_rx,cfg_s,ak); 
+if cfg_s.en_single_run
 
-y = o_rx.y;
-yk = o_rx.o_dws;
-ak_hat = o_rx.ak_hat_fixed;       %Símbolos ya pasados por el Cycle Slip Corrector
-ak_aligned = o_rx.ak_tx_aligned;  
+    % Config bloques individuales
+    % Transmisor
+    o_tx_s = struct();
+    o_tx_s = transmisor_QAM(cfg_s);
+    ak     = o_tx_s.ak;
+    ak_up  = o_tx_s.ak_ovs;
+    o_tx   = o_tx_s.o_tx;
+    rrc    = o_tx_s.rrc;
+    
+    fprintf(['\nCASO INDIVIDUAL: M = %d | EbNo = %.1f dB | ' ...
+             'Lsymbs = %d | rfd_gain = %.1e\n'], ...
+            cfg_s.M, cfg_s.EbNo, cfg_s.Lsymbs, cfg_s.rfd_gain);
+    
+    
+    % Canal
+    i_canal = o_tx;
+    o_canal = channel(i_canal,cfg_s);
+    
+    % Receptor
+    i_rx = o_canal;
+    o_rx = Receiver(i_rx,cfg_s,ak); 
+    
+    y = o_rx.y;
+    yk = o_rx.o_dws;
+    ak_hat = o_rx.ak_hat_fixed;       %Símbolos ya pasados por el Cycle Slip Corrector
+    ak_aligned = o_rx.ak_tx_aligned;  
+    
+    % 2. Ber checker
+    [ber,errors]  = BER_checker(ak_hat, ak_aligned, cfg_s.M,0);
+    o_data_rx.ber = ber;
+    o_data_rx.errors = errors;
 
-% 2. Ber checker
-[ber,errors]  = BER_checker(ak_hat, ak_aligned, cfg_s.M,0);
-o_data_rx.ber = ber;
-o_data_rx.errors = errors;
-
+end
 %% DEBUGGING Y GRÁFICOS
 % Debugging general: PSD, diagrama de ojo y constelacion
 if cfg_s.en_debug_plots

@@ -86,7 +86,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     slicer_in_log = zeros(ceil(Lsymbs/FRAME_LOG_1x),1);
     phase_acc_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
     phase_integral_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
-
+    phase_error_log = zeros(ceil(Lsymbs/FRAME_LOG_1x), 1);
 
     N_symbs_rx = ceil(length(agc_out) / ovs_ffe); %cantidad de simbolos recibidos
     ak_hat_arr = zeros(N_symbs_rx, 1);
@@ -162,10 +162,29 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
             end
 
             % PLL
-            phase_integral = phase_integral + Ki * phase_error + rfd_gain_value;
-            loop_filter_out = (Kp * phase_error) + phase_integral;
-            phase_acc = phase_acc + loop_filter_out;
+            % phase_integral = phase_integral + Ki * phase_error + rfd_gain_value;
+            % loop_filter_out = (Kp * phase_error) + phase_integral;
+            % phase_acc = phase_acc + loop_filter_out;
+
+            % PLL
+            if i_cfg_s.en_carrier_recovery
             
+                phase_integral = phase_integral ...
+                               + Ki * phase_error ...
+                               + rfd_gain_value;
+            
+                loop_filter_out = Kp * phase_error + phase_integral;
+                phase_acc = phase_acc + loop_filter_out;
+            
+            else
+            
+                % Sin errores de portadora: no corregimos fase ni frecuencia
+                phase_integral = 0;
+                loop_filter_out = 0;
+                phase_acc = 0;
+            
+            end
+
             % ECUALIZADOR
             if idx_new < t4_ffe_dd
                 % Etapas 1, 2, 3 y 4 usan CMA
@@ -191,6 +210,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 slicer_in_log(idx_log) = slicer_in; 
                 phase_acc_log(idx_log) = phase_acc; 
                 phase_integral_log(idx_log) = phase_integral;
+                phase_error_log(idx_log) = phase_error;
             end
 
         end
@@ -224,6 +244,52 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     [s_out_cs] = dinamic_CS_corrector(s_in_cs);
     
     ak_tx_aligned_trunc = ak_aligned(1 : length(s_out_cs.orx_cs_fixed));
+
+    %% Chequeo alternativo: corrección global de cuadrante
+
+% Usamos exactamente la misma cantidad de símbolos que el CS dinámico
+N_global = min(length(o_dws_aligned), ...
+               length(ak_tx_aligned_trunc));
+
+rx_global_in = o_dws_aligned(1:N_global);
+tx_global    = ak_tx_aligned_trunc(1:N_global);
+
+rx_global_in = rx_global_in(:);
+tx_global    = tx_global(:);
+
+% Posibles ambigüedades de cuadrante de una constelación QAM
+rot_candidates = exp(1j*(0:3)*pi/2);
+
+mse_quadrant = zeros(4,1);
+
+for q = 1:4
+    rx_test = rx_global_in .* rot_candidates(q);
+
+    mse_quadrant(q) = mean(abs(rx_test - tx_global).^2);
+end
+
+% Elegimos el cuadrante que mejor coincide con la referencia
+[~, q_best] = min(mse_quadrant);
+
+rx_global_fixed = rx_global_in .* rot_candidates(q_best);
+
+% BER
+Bref_global = qamdemod(tx_global, M, 'OutputType', 'bit');
+Bhat_global = qamdemod(rx_global_fixed, M, 'OutputType', 'bit');
+
+BER_global = mean(Bhat_global(:) ~= Bref_global(:));
+
+% SER
+Sref_global = qamdemod(tx_global, M);
+Shat_global = qamdemod(rx_global_fixed, M);
+
+SER_global = mean(Shat_global(:) ~= Sref_global(:));
+
+fprintf(' BER con CS global      = %.4e   (SER = %.4e)\n', ...
+        BER_global, SER_global);
+
+fprintf(' Cuadrante global elegido = %d grados\n', ...
+        (q_best-1)*90);
 
 
     %% ---------------- CHEQUEO DE BER DEL RECEPTOR ----------------
@@ -324,9 +390,11 @@ fprintf('--------------------------------------------\n');
     o_data_rx.htaps = htaps;
     o_data_rx.ffe_out_log = ffe_out_log;
     o_data_rx.ovs_ffe = ovs_ffe; 
+    o_data_rx.phase_error_log = phase_error_log;
 
 
-
+    o_data_rx.cs_count = s_out_cs.cs_count;
+    o_data_rx.cs_phase = s_out_cs.cs_phase;
     %% Gráfico de la rama integral del PLL
 if i_cfg_s.en_plots_rx
 
@@ -345,19 +413,19 @@ if i_cfg_s.en_plots_rx
     grid on;
     hold on;
 
-xline(t1_rfd, '--', 'RFD ON', ...
-      'LabelVerticalAlignment', 'bottom');
-
-xline(t2_fcr_v4, '--', 'FCR V4 ON', ...
-      'LabelVerticalAlignment', 'bottom');
-
-xline(t3_fcr_dd, '--', 'FCR DD ON', ...
-      'LabelVerticalAlignment', 'bottom');
-
-xline(t4_ffe_dd, '--', 'FFE DD ON', ...
-      'LabelVerticalAlignment', 'bottom');
-
-hold off;
+    xline(t1_rfd, '--', 'RFD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t2_fcr_v4, '--', 'FCR V4 ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t3_fcr_dd, '--', 'FCR DD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t4_ffe_dd, '--', 'FFE DD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    hold off;
 
     xlabel('Símbolos', 'Interpreter', 'latex', 'FontSize', 12);
     ylabel('Rama integral [MHz]', ...
@@ -365,6 +433,41 @@ hold off;
 
     title('Estimación del offset de frecuencia', ...
           'Interpreter', 'latex', 'FontSize', 12);
+
+    %% Gráfico del error de fase del PLL
+    
+    phase_error_plot = phase_error_log(1:N_log_pll);
+    
+    figure;
+    plot(symb_axis, phase_error_plot, 'LineWidth', 1);
+    grid on;
+    hold on;
+    
+    yline(0, '-');
+    
+    xline(t1_rfd, '--', 'RFD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t2_fcr_v4, '--', 'FCR V4 ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t3_fcr_dd, '--', 'FCR DD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    xline(t4_ffe_dd, '--', 'FFE DD ON', ...
+          'LabelVerticalAlignment', 'bottom');
+    
+    hold off;
+    
+    xlabel('Símbolos', ...
+           'Interpreter', 'latex', 'FontSize', 12);
+    
+    ylabel('Error de fase [rad]', ...
+           'Interpreter', 'latex', 'FontSize', 12);
+    
+    title('Error de fase del PLL', ...
+          'Interpreter', 'latex', 'FontSize', 12);
+
 end
 
 end

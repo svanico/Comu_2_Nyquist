@@ -19,11 +19,18 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             cfg_s.EbNo   = EbNo_BER(idx);
             cfg_s.Lsymbs = L_vec(idx);
 
-            cfg_s.t1_rfd    = fix(0.10 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
-            cfg_s.t2_fcr_v4 = fix(0.20 * cfg_s.Lsymbs); % Pasa a Etapa 3 (Prende Fase Ciega)
-            cfg_s.t3_fcr_dd = fix(0.35 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
-            cfg_s.t4_ffe_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS);
-            
+            % cfg_s.t1_rfd    = fix(0.10 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
+            % cfg_s.t2_fcr_v4 = fix(0.20 * cfg_s.Lsymbs); % Pasa a Etapa 3 (Prende Fase Ciega)
+            % cfg_s.t3_fcr_dd = fix(0.35 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
+            % cfg_s.t4_ffe_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS);
+            % 
+
+            cfg_s.t1_rfd = fix(cfg_s.t1_rfd_frac * cfg_s.Lsymbs);
+            cfg_s.t2_fcr_v4 = fix(cfg_s.t2_fcr_v4_frac * cfg_s.Lsymbs);
+            cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs);
+            cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs);
+
+
             % Transmisor
             o_tx_s = transmisor_QAM(cfg_s);
             ak = o_tx_s.ak;
@@ -50,9 +57,12 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
             % fprintf('M = %2d | Eb/No = %2d dB | BER = %e | Errores = %d\n', ...
             %         M_actual, cfg_s.EbNo, ber, errors);
 
+
+
             fprintf(['M = %2d | Eb/No = %2d dB | BER = %e | ' ...
-         'Errores = %d | MSE = %.2f dB\n'], ...
-        M_actual, cfg_s.EbNo, ber, errors, o_rx.MSE);
+         'Errores = %d | MSE = %.2f dB | CS = %d\n'], ...
+        M_actual, cfg_s.EbNo, ber, errors, ...
+        o_rx.MSE, o_rx.cs_count);
         end
     end
     

@@ -47,11 +47,26 @@ for nblock=1:nblocks
             phase_ok=phase_test;
         end
     end
-    if phase_ok ~= last_phase
-        s_out.cs_count = cs_count +1;
+    % if phase_ok ~= last_phase
+    %     s_out.cs_count = cs_count +1;
+    % end
+    % last_phase = phase_ok;
+    % s_out.cs_phase(nblock) = phase_ok; 
+    % s_out.orx_cs_fixed(slice) = slicer(rx_block_in.*exp(1j*phase_ok),parameters.M);
+  
+    % No contamos el cuadrante inicial como cycle slip
+    if nblock > 1 && phase_ok ~= last_phase
+        cs_count = cs_count + 1;
     end
+    
     last_phase = phase_ok;
-    s_out.cs_phase(nblock) = phase_ok; 
-    s_out.orx_cs_fixed(slice) = slicer(rx_block_in.*exp(1j*phase_ok),parameters.M);
+    
+    cs_phase(nblock) = phase_ok;
+    
+    orx_cs_fixed(slice) = ...
+        slicer_QAM_(rx_block_in .* exp(1j*phase_ok), parameters.M);
 end
+s_out.cs_count = cs_count;
+s_out.cs_phase = cs_phase;
+s_out.orx_cs_fixed = orx_cs_fixed;
 end
