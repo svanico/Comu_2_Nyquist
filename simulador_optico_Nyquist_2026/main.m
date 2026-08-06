@@ -63,22 +63,20 @@ cfg_s.t2_fcr_v4 = fix(cfg_s.t2_fcr_v4_frac * cfg_s.Lsymbs);% Pasa a Etapa 3 (FFE
 cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs);% Pasa a Etapa 4 (FCR a DD, apaga RFD)
 cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
-% cfg_s.t1_rfd    = fix(0.15 * cfg_s.Lsymbs); % Pasa a Etapa 2 (Prende RFD)
-% cfg_s.t2_fcr_v4 = fix(0.25 * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
-% cfg_s.t3_fcr_dd = fix(0.45 * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
-% cfg_s.t4_ffe_dd = fix(0.65 * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
+
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % Habilitaciones
-cfg_s.en_plots_rx     = 0;          % Análisis del receptor (MSE, FFE, Constelación)
+cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
+cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 % Debugging general ---
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD
 cfg_s.debug_eye       = 0;          % Diagrama de ojo
 cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
+
 % Vectores para Curva BER ---
 EbNo_BER              = 0:2:12;
 M_vec                 = [4 16];
