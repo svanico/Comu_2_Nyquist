@@ -157,7 +157,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 loop_filter_out = 0;
                 phase_acc = 0;
             end
-                  
+            
+            error_base = slicer_in - slicer_out;
             % ECUALIZADOR
             if idx_new < t4_ffe_dd
                 % Etapas 1, 2, 3 y 4 usan CMA
@@ -173,14 +174,12 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
             ak_hat_arr(idx_new) = slicer_out;
             o_dws_arr(idx_new) = slicer_in;
             htaps = (1-leak)*htaps - step*error*conj(buffer_filter);
-
-            error_base = (slicer_in - slicer_out);
             
             % 8. LOGGING A TASA 1x (Decimado)
             if mod(idx_new,FRAME_LOG_1x)==0
                 idx_log = idx_new/FRAME_LOG_1x;
                 error_log(idx_log) = error;
-                error_base_log(idx_log) = error_base;
+                error_base(idx_log) = error_base;
                 slicer_in_log(idx_log) = slicer_in;
                 phase_acc_log(idx_log) = phase_acc;
                 phase_integral_log(idx_log) = phase_integral;

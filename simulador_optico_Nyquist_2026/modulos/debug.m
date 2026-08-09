@@ -72,7 +72,7 @@ function debug_dashboard(cfg, tx, ch, rx)
     % --- Subplot A: MSE ---
     subplot(2,3,1);
     N_filt = 100;
-    mse_smooth = 10*log10(filter(ones(N_filt,1)./N_filt, 1, abs(rx.error_log).^2));
+    mse_smooth = 10*log10(filter(ones(N_filt,1)./N_filt, 1, abs(rx.error_base_log).^2));
     plot(mse_smooth, 'LineWidth', 2, 'Color', '#0072BD');
     grid on; box on;
     xline(cfg.t4_ffe_dd / FRAME_LOG, 'r--', 'Switch a DD', 'LabelVerticalAlignment', 'bottom');
@@ -83,7 +83,7 @@ function debug_dashboard(cfg, tx, ch, rx)
     % --- Subplot B: SNR Estimada ---
     subplot(2,3,2);
     P_signal = mean(abs(tx.ak).^2);
-    snr_est = 10*log10(P_signal ./ filter(ones(N_filt,1)./N_filt, 1, abs(rx.error_log).^2));
+    snr_est = 10*log10(P_signal ./ filter(ones(N_filt,1)./N_filt, 1, abs(rx.error_base_log).^2));
     plot(snr_est, 'LineWidth', 2, 'Color', '#EDB120');
     grid on; box on;
     xline(cfg.t4_ffe_dd / FRAME_LOG, 'r--', 'Switch a DD', 'LabelVerticalAlignment', 'bottom');
