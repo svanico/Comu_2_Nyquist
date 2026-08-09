@@ -79,9 +79,9 @@ cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FF
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
 % Habilitaciones
-cfg_s.en_plots_rx     = 1;          % Análisis del receptor (MSE, FFE, Constelación)
+cfg_s.en_plots_rx     = 0;          % Análisis del receptor (MSE, FFE, Constelación)
 cfg_s.en_plots        = 0;          % Habilitar graficos temporales (Tx/Rx)
-cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
+cfg_s.en_curva_ber    = 1;          % Habilitar simulacion en cascada para la curva ber
 % Debugging general ---
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % PSD

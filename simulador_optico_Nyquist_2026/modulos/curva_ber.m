@@ -216,7 +216,7 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
         legend('Location', 'best');
         
         set(gca, 'YScale', 'log');
-        ylim([1e-5 1]);
+        ylim([1e-5 2e-2]);
     
         hold off;
     end
