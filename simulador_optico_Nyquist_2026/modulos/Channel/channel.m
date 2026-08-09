@@ -12,8 +12,7 @@ function [o_channel] = channel(i_channel, i_cfg_s)
     OVS = i_cfg_s.OVS.CH;
     fs = OVS * BR;
     delay = (NTAPS - 1) / 2;
-    % fc = i_cfg_s.ch_bw / (fs / 2); 
-    fc = 0.9;
+    % fc = 0.9;
     EbNo = i_cfg_s.EbNo;
 
     %Portadora
@@ -50,12 +49,13 @@ function [o_channel] = channel(i_channel, i_cfg_s)
                         + 10*log10(log2(M)) ...
                         - 10*log10(OVS);
     
-        fprintf([' SNR canal objetivo = %.3f dB | ' ...
-                 'SNR canal medida = %.3f dB\n'], ...
-                SNR_objetivo_dB, SNR_medida_dB);
+        % fprintf([' SNR canal objetivo = %.3f dB | ' ...
+        %          'SNR canal medida = %.3f dB\n'], ...
+        %         SNR_objetivo_dB, SNR_medida_dB);
     end
 
     if en_ch
+        fc = i_cfg_s.ch_bw / (fs / 2); 
         b = fir1(NTAPS - 1, fc); 
         
         if pos_ruido

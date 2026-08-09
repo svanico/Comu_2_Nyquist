@@ -284,12 +284,12 @@ Sref_global = qamdemod(tx_global, M);
 Shat_global = qamdemod(rx_global_fixed, M);
 
 SER_global = mean(Shat_global(:) ~= Sref_global(:));
-
-fprintf(' BER con CS global      = %.4e   (SER = %.4e)\n', ...
-        BER_global, SER_global);
-
-fprintf(' Cuadrante global elegido = %d grados\n', ...
-        (q_best-1)*90);
+% 
+% fprintf(' BER con CS global      = %.4e   (SER = %.4e)\n', ...
+%         BER_global, SER_global);
+% 
+% fprintf(' Cuadrante global elegido = %d grados\n', ...
+%         (q_best-1)*90);
 
 
     %% ---------------- CHEQUEO DE BER DEL RECEPTOR ----------------
@@ -341,18 +341,18 @@ Bhat_cs_sym = qamdemod(ak_hat_cs, M);
 
 SER_rx_cs = mean(Bhat_cs_sym(:) ~= Bref_cs_sym(:));
 
-%% FINAL PRINTS
-fprintf('--------------------------------------------\n');
-fprintf(' BER salida del receptor = %.4e   (SER = %.4e)\n', ...
-        BER_rx, SER_rx);
-
-fprintf(' BER receptor + CS fix   = %.4e   (SER = %.4e)\n', ...
-        BER_rx_cs, SER_rx_cs);
-
-fprintf(' Simbolos evaluados      = %d\n', N_eval);
-fprintf(' Simbolos evaluados CS   = %d\n', N_eval_cs);
-fprintf('--------------------------------------------\n');
-
+% % %% FINAL PRINTS
+% % fprintf('--------------------------------------------\n');
+% % fprintf(' BER salida del receptor = %.4e   (SER = %.4e)\n', ...
+% %         BER_rx, SER_rx);
+% % 
+% % fprintf(' BER receptor + CS fix   = %.4e   (SER = %.4e)\n', ...
+% %         BER_rx_cs, SER_rx_cs);
+% % 
+% % fprintf(' Simbolos evaluados      = %d\n', N_eval);
+% % fprintf(' Simbolos evaluados CS   = %d\n', N_eval_cs);
+% % fprintf('--------------------------------------------\n');
+% % 
 
 
 

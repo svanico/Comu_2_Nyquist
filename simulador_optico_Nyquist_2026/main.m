@@ -1,4 +1,4 @@
-% clear; clc; close all;
+clear; clc; close all;
 rng(1);
 %% 1. Parámetros generales
 cfg_s = struct();
@@ -7,23 +7,35 @@ BR                    = cfg_s.BR;
 cfg_s.M               = 16;          % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 4;         % valor de ebno para los graficos temporales/debugging
+cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
 cfg_s.NTAPS_RRC       = 101;        % Filtros transmisor
 cfg_s.debug_snr       = 1;
-cfg_s.en_carrier_recovery = 0;   % Curva BER AWGN ideal
-% cfg_s.en_carrier_recovery = 1;   % Pruebas con offset de fase/frecuencia
+% cfg_s.en_carrier_recovery = 0;   % Curva BER AWGN ideal
+cfg_s.en_carrier_recovery = 1;   % Pruebas con offset de fase/frecuencia
 
-cfg_s.en_single_run = 0;
+cfg_s.en_single_run = 1;
 
 %% 2. Canal y ruido
-cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
+cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.NTAPS_FIR       = 101;
+%cfg_s.ch_bw = 16.5e9;                 % Frecuencia de corte del canal [Hz]
+
+% % Leve
+% cfg_s.ch_bw = 17.75e9;
+% 
+% % Moderada
+% cfg_s.ch_bw = 15.75e9;
+% 
+% % Agresiva
+cfg_s.ch_bw = 15e9;
+
+
 
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
@@ -78,11 +90,12 @@ cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 
 % Vectores para Curva BER ---
-EbNo_BER              = 0:2:12;
-M_vec                 = [4 16];
+EbNo_BER              = 0:1:12;
+M_vec                 = [16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
 % L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 L_vec = 1e6 * ones(size(EbNo_BER));
+
 %% EJECUCIÓN PRINCIPAL DEL SISTEMA
 
 if cfg_s.en_curva_ber
@@ -259,6 +272,7 @@ if  cfg_s.en_plots_rx
     H = fft(htaps, NFFT);
     f = linspace(0, Fs/2, NFFT/2);
     plot(f/1e9, 20*log10(abs(H(1:NFFT/2))+1e-12), 'LineWidth', 2, 'Color', '#EDB120')
+    
     grid on; box on;
     xlabel('Frecuencia [GHz]', 'FontWeight', 'bold'); 
     ylabel('Magnitud [dB]', 'FontWeight', 'bold');
