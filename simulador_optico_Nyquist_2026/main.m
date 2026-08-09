@@ -7,42 +7,40 @@ BR                    = cfg_s.BR;
 cfg_s.M               = 16;          % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 12;         % valor de ebno para los graficos temporales/debugging
+cfg_s.EbNo            = 100;         % valor de ebno para los graficos temporales/debugging
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 OVS_CH                = cfg_s.OVS.CH;
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
-cfg_s.NTAPS_RRC       = 101;        % Filtros transmisor
+cfg_s.NTAPS_RRC       = 51;        % Filtros transmisor
 cfg_s.debug_snr       = 1;
-% cfg_s.en_carrier_recovery = 0;   % Curva BER AWGN ideal
-cfg_s.en_carrier_recovery = 1;   % Pruebas con offset de fase/frecuencia
-
-cfg_s.en_single_run = 1;
+  
+cfg_s.en_carrier_recovery = 0;   % Curva BER AWGN ideal
+% Pruebas con offset de fase/frecuencia
 
 %% 2. Canal y ruido
 cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco (por como pusimos el canal, metés el ruido antes del filtro del canal. Entonces el ruido también pasa por el filtro y queda coloreado.)
 cfg_s.NTAPS_FIR       = 101;
-%cfg_s.ch_bw = 16.5e9;                 % Frecuencia de corte del canal [Hz]
 
 % % Leve
-% cfg_s.ch_bw = 17.75e9;
+cfg_s.ch_bw = 17.75e9;
 % 
 % % Moderada
 % cfg_s.ch_bw = 15.75e9;
 % 
 % % Agresiva
-cfg_s.ch_bw = 15e9;
+% cfg_s.ch_bw = 15e9;
 
 
 
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
 % Errores Estáticos 
-cfg_s.delta_freq      = 0;        % Offset del LO
+cfg_s.delta_freq      = 0e6;       % Offset del LO
 cfg_s.phase_offset    = 0/180*pi;  % Error de fase
-cfg_s.LW              = 0e3;       % Ancho de linea [Hz] -> Ruido de fase
+cfg_s.LW              = 0e3;        % Ancho de linea [Hz] -> Ruido de fase
 % Fluctuaciones
 cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
@@ -53,26 +51,26 @@ cfg_s.phase_tone_freq = 0e6;
 
 % Parámetros del Ecualizador (FFE)
 cfg_s.NTAPS_ffe       = 51;             % Cantidad de coeficientes del ecualizador
-cfg_s.cma_step        = 1e-3;           % Paso de adaptación para convergencia ciega
+cfg_s.cma_step        = 1e-4;           % Paso de adaptación para convergencia ciega
 cfg_s.dd_step         = 1e-4;           % Paso de adaptación para seguimiento fino
-cfg_s.leak            = 0e-6;           % Factor de pérdida (leakage)
+cfg_s.leak            = 1e-6;           % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 10e-3;          % Ganancia proporcional del PLL
+cfg_s.Kp              = 1e-3;          % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500;  % Ganancia integral del PLL
-cfg_s.rfd_gain        = 1e-4;           % Magnitud del "patadón" de frecuencia del RFD
+cfg_s.rfd_gain        = 1e-4;           
 
 % Timers (FSM RX)
 
-cfg_s.t1_rfd_frac    = 0.15;
-cfg_s.t2_fcr_v4_frac = 0.25;
-cfg_s.t3_fcr_dd_frac = 0.45;
-cfg_s.t4_ffe_dd_frac = 0.65;
+cfg_s.t1_rfd_frac    = 0.2;
+cfg_s.t2_fcr_v4_frac = 0.3;
+cfg_s.t3_fcr_dd_frac = 0.4;
+cfg_s.t4_ffe_dd_frac = 0.6;
 
 
-cfg_s.t1_rfd = fix(cfg_s.t1_rfd_frac * cfg_s.Lsymbs);% Pasa a Etapa 2 (Prende RFD)
-cfg_s.t2_fcr_v4 = fix(cfg_s.t2_fcr_v4_frac * cfg_s.Lsymbs);% Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
-cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs);% Pasa a Etapa 4 (FCR a DD, apaga RFD)
+cfg_s.t1_rfd    = fix(cfg_s.t1_rfd_frac * cfg_s.Lsymbs);    % Pasa a Etapa 2 (Prende RFD)
+cfg_s.t2_fcr_v4 = fix(cfg_s.t2_fcr_v4_frac * cfg_s.Lsymbs); % Pasa a Etapa 3 (FFE-CMA + RFD + FCR)
+cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 4 (FCR a DD, apaga RFD)
 cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 
@@ -92,9 +90,11 @@ cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 % Vectores para Curva BER ---
 EbNo_BER              = 0:1:12;
 M_vec                 = [16];
-% L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
-% L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
 L_vec = 1e6 * ones(size(EbNo_BER));
+%L_vec = [1e7, 1e7, 1e7, 1e6, 1e6, 1e5, 1e5, 1e5, 1e5]; % vector de símbolos variable para cada EbNo
+
+EbNo_BER              = 0:2:12;
+M_vec                 = [4 16];
 
 %% EJECUCIÓN PRINCIPAL DEL SISTEMA
 
@@ -102,9 +102,8 @@ if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
 
-if cfg_s.en_single_run
 
-    % Config bloques individuales
+% Config bloques individuales
     % Transmisor
     o_tx_s = struct();
     o_tx_s = transmisor_QAM(cfg_s);
@@ -131,12 +130,11 @@ if cfg_s.en_single_run
     ak_hat = o_rx.ak_hat_fixed;       %Símbolos ya pasados por el Cycle Slip Corrector
     ak_aligned = o_rx.ak_tx_aligned;  
     
-    % 2. Ber checker
-    [ber,errors]  = BER_checker(ak_hat, ak_aligned, cfg_s.M,0);
-    o_data_rx.ber = ber;
-    o_data_rx.errors = errors;
+% 2. Ber checker
+[ber,errors]  = BER_checker(ak_hat, ak_aligned, cfg_s.M,0);
+o_data_rx.ber = ber;
+o_data_rx.errors = errors;
 
-end
 %% DEBUGGING Y GRÁFICOS
 % Debugging general: PSD, diagrama de ojo y constelacion
 if cfg_s.en_debug_plots

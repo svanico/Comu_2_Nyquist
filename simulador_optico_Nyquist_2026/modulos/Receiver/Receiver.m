@@ -12,7 +12,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     rolloff = i_cfg_s.rolloff;
     t0 = 0;
     
-    agc_target = .3;                             %esto es a ojo (creemos)
+    agc_target = 1;                             %esto es a ojo (creemos)
     % R_CMA   =   cfg_s.R_CMA;
     % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
     R_CMA = (mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
