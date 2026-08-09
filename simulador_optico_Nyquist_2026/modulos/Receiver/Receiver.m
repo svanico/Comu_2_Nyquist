@@ -14,6 +14,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     % R_CMA = cfg_s.R_CMA;
     % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
     R_CMA = (mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
+    R_CMA = 13.2;
     dd_step = i_cfg_s.dd_step;
     cma_step = i_cfg_s.cma_step;
     leak = i_cfg_s.leak;
@@ -111,6 +112,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                     last_detection = 0;
                 end
             elseif idx_new < t3_fcr_dd
+
                 % FFE-CMA + RFD + FCR(4th Power)
                 if is_qpsk_like
                     phase_error = mod(angle(slicer_in), pi/2) - pi/4; % FCR V4
@@ -128,6 +130,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                     rfd_gain_value = 0;
                 end
             elseif idx_new < t4_ffe_dd
+
                 % FFE-CMA + FCR-DD
                 phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
             else
@@ -239,7 +242,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     % SER
     Sref_global = qamdemod(tx_global, M);
     Shat_global = qamdemod(rx_global_fixed, M);
-    SER_global = mean(Shat_global(:) ~= Sref_global(:));
+    SER_global  = mean(Shat_global(:) ~= Sref_global(:));
     
     % fprintf(' BER con CS global = %.4e (SER = %.4e)\n', ...
     % BER_global, SER_global);
@@ -286,19 +289,6 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     Bref_cs_sym = qamdemod(ak_ref_cs, M);
     Bhat_cs_sym = qamdemod(ak_hat_cs, M);
     SER_rx_cs = mean(Bhat_cs_sym(:) ~= Bref_cs_sym(:));
-    
-    % % %% FINAL PRINTS
-    % % fprintf('--------------------------------------------\n');
-    % % fprintf(' BER salida del receptor = %.4e (SER = %.4e)\n', ...
-    % % BER_rx, SER_rx);
-    % %
-    % % fprintf(' BER receptor + CS fix = %.4e (SER = %.4e)\n', ...
-    % % BER_rx_cs, SER_rx_cs);
-    % %
-    % % fprintf(' Simbolos evaluados = %d\n', N_eval);
-    % % fprintf(' Simbolos evaluados CS = %d\n', N_eval_cs);
-    % % fprintf('--------------------------------------------\n');
-    % %
     
     %% Variables para el main
     % 1. Salidas principales

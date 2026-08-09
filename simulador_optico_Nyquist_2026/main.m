@@ -4,7 +4,7 @@ rng(1);
 %% 1. Parámetros generales
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
-cfg_s.M               = 4;         % Orden de modulacion
+cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.9;        % Exceso de ancho de banda
 cfg_s.EbNo            = 100;         % Valor de EbNo para los graficos temporales/debugging
@@ -14,7 +14,7 @@ cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
 cfg_s.NTAPS_RRC       = 51;         % Filtros transmisor
 
-cfg_s.en_carrier_recovery = 1;      % Habilita corrección en receptor
+cfg_s.en_carrier_recovery = 0;      % Habilita corrección en receptor
 
 %% 2. Canal y ruido
 cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
@@ -24,7 +24,7 @@ cfg_s.NTAPS_FIR       = 101;        % Coeficientes del canal
 cfg_s.ch_bw           = 17.75e9;    % Ancho de banda del canal (Leve)
 
 %% 3. Errores de portadora
-cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
+cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
 % Errores Estáticos 
 cfg_s.delta_freq      = 0e6;       % Offset del LO
 cfg_s.phase_offset    = 30/180*pi;  % Error de fase
@@ -74,10 +74,6 @@ cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 EbNo_BER              = 0:2:12;
 M_vec                 = [4 16];
 L_vec                 = 1e6 * ones(size(EbNo_BER));
-
-%% =======================================================================
-%                    EJECUCIÓN PRINCIPAL DEL SISTEMA
-% ========================================================================
 
 % Ejecución en bucle (BER Sweep)
 if cfg_s.en_curva_ber
