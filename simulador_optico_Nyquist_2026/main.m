@@ -104,7 +104,7 @@ if cfg_s.en_single_run
              'Lsymbs = %d | rfd_gain = %.1e\n'], ...
             cfg_s.M, cfg_s.EbNo, cfg_s.Lsymbs, cfg_s.rfd_gain);
     
-    
+    %prueba 
     % Canal
     i_canal = o_tx;
     o_canal = channel(i_canal,cfg_s);
