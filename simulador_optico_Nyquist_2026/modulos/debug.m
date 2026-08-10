@@ -184,7 +184,6 @@ function debug_dashboard(cfg, tx, ch, rx)
          'BackgroundColor', [0.96 0.96 0.96], 'EdgeColor', [0.6 0.6 0.6], 'Margin', 10);
 
 %% 4. RECUPERACIÓN DE PORTADORA (PLL Y CONSTELACIONES)
-    if cfg.en_carrier_recovery
         figure('Name', '4. Recuperación de Portadora (PLL)', 'Color', 'w', 'Position', [250, 250, 1000, 750]);
         
         symb_axis = (1:length(rx.phase_integral_log)) .* FRAME_LOG;
@@ -238,7 +237,8 @@ function debug_dashboard(cfg, tx, ch, rx)
         xlabel('In-Phase (I)', 'FontWeight', 'bold');
         ylabel('Quadrature (Q)', 'FontWeight', 'bold');
         title('DESPUÉS del FCR (Entrada al Slicer)');
-    end    %% 5. DIAGRAMA DE OJO Y CONSTELACIÓN (Salida del Slicer)
+
+    %% 5. DIAGRAMA DE OJO Y CONSTELACIÓN (Salida del Slicer)
     figure('Name', '5. Calidad de Señal al Slicer', 'Color', 'w', 'Position', [300, 300, 1000, 500]);
     
     % Constelación en régimen estacionario (últimos 2000 símbolos)

@@ -14,7 +14,7 @@ cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
 cfg_s.OVS.DSP         = 2;          % Sobremuestreo del DSP/LMS
 cfg_s.NTAPS_RRC       = 51;         % Filtros transmisor
 
-cfg_s.en_carrier_recovery = 0;      % Habilita corrección en receptor
+cfg_s.en_carrier_recovery = 1;      % Habilita corrección en receptor
 
 %% 2. Canal y ruido
 cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
@@ -35,14 +35,14 @@ cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 
 cfg_s.phase_tone_amp  = 0.1;
-cfg_s.phase_tone_freq = 500e3;
+cfg_s.phase_tone_freq = 1e6;
 
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
 cfg_s.NTAPS_ffe       = 51;         % Cantidad de coeficientes del ecualizador
 cfg_s.cma_step        = 1e-4;       % Paso de adaptación para convergencia ciega (Reducir para modulaciones altas)
 cfg_s.dd_step         = 1e-4;       % Paso de adaptación para seguimiento fino
-cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
+cfg_s.leak            = 1e-6;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
