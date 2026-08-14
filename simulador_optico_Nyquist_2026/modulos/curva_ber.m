@@ -5,7 +5,7 @@ function [ber_sim, errors_sim] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec)
 
 
     % Casos de canal
-    ch_bw_vec = [0 17.75e9 15.75e9 15e9];
+    ch_bw_vec = [0 17.75e9 16e9 15.5e9];
     ch_names  = {'Impulso', 'Leve', 'Moderada', 'Agresiva'};
     
     Nch = length(ch_bw_vec);

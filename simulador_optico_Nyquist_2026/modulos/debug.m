@@ -100,7 +100,7 @@ function debug_dashboard(cfg, tx, ch, rx)
          'MarkerSize', 6, 'Color', '#7E2F8E', 'MarkerFaceColor', '#7E2F8E');
     grid on; box on;
     
-    idx_central = floor(cfg.NTAPS_ffe/2) + 1;
+    idx_central = floor(cfg.NTAPS_ffe/2) +1;
     hold on;
     plot(idx_central, abs(htaps_finales(idx_central)), 'ro', 'MarkerSize', 10, 'LineWidth', 1.5);
     hold off;
@@ -237,6 +237,94 @@ function debug_dashboard(cfg, tx, ch, rx)
         xlabel('In-Phase (I)', 'FontWeight', 'bold');
         ylabel('Quadrature (Q)', 'FontWeight', 'bold');
         title('DESPUÉS del FCR (Entrada al Slicer)');
+
+
+
+%% FIGURA EXTRA - RESPUESTA FINAL DEL FFE
+%% este lo use para finalizar el ej2, corre y guarda un .m con los datos de la rta en freq y en impulso
+
+% % Ejecutar una vez para cada BW: leve, moderada y agresiva
+% 
+% NFFT_ffe = 4096;
+% 
+% % Respuesta en frecuencia final del FFE
+% H_ffe_final = fftshift(fft(rx.htaps, NFFT_ffe));
+% f_ffe = linspace(-fs_dsp/2, fs_dsp/2, NFFT_ffe);
+% 
+% % Taps finales
+% htaps_finales_ffe = rx.htaps;
+% eje_taps_ffe = 1:length(htaps_finales_ffe);
+% 
+% % Identificamos el caso del canal
+% if ~cfg.en_ch_filter
+% 
+%     caso_ffe = 'Impulso';
+%     archivo_ffe = 'FFE_impulso.mat';
+% 
+% elseif abs(cfg.ch_bw - 17.75e9) < 1e6
+% 
+%     caso_ffe = 'Leve';
+%     archivo_ffe = 'FFE_leve.mat';
+% 
+% elseif abs(cfg.ch_bw - 16e9) < 1e6
+% 
+%     caso_ffe = 'Moderada';
+%     archivo_ffe = 'FFE_moderada.mat';
+% 
+% elseif abs(cfg.ch_bw - 15.5e9) < 1e6
+% 
+%     caso_ffe = 'Agresiva';
+%     archivo_ffe = 'FFE_agresiva.mat';
+% 
+% else
+% 
+%     caso_ffe = sprintf('BW = %.2f GHz', cfg.ch_bw/1e9);
+%     archivo_ffe = 'FFE_otro.mat';
+% 
+% end
+% 
+% 
+% figure('Name', ['FFE - ' caso_ffe], ...
+%        'Color', 'w', ...
+%        'Position', [200 100 900 700]);
+% 
+% % ---------------------------------------------------------
+% % Respuesta en frecuencia
+% % ---------------------------------------------------------
+% subplot(2,1,1);
+% 
+% plot(f_ffe/1e9, 20*log10(abs(H_ffe_final) + eps), ...
+%      'LineWidth', 1.8);
+% 
+% grid on;
+% xlabel('Frecuencia [GHz]');
+% ylabel('|H_{FFE}(f)| [dB]');
+% title(['Respuesta en Frecuencia Final del FFE - ' caso_ffe]);
+% 
+% 
+% % ---------------------------------------------------------
+% % Respuesta impulsional
+% % ---------------------------------------------------------
+% subplot(2,1,2);
+% 
+% stem(eje_taps_ffe, abs(htaps_finales_ffe), ...
+%      'filled', ...
+%      'LineWidth', 1.2);
+% 
+% grid on;
+% xlabel('Índice del Tap');
+% ylabel('|h_{FFE}[n]|');
+% title(['Respuesta Impulsional Final del FFE - ' caso_ffe]);
+% 
+% hold off;
+% 
+% 
+% % Guardamos para después comparar los tres casos
+% save(archivo_ffe, ...
+%      'H_ffe_final', ...
+%      'f_ffe', ...
+%      'htaps_finales_ffe');
+
 
     %% 5. DIAGRAMA DE OJO Y CONSTELACIÓN (Salida del Slicer)
     figure('Name', '5. Calidad de Señal al Slicer', 'Color', 'w', 'Position', [300, 300, 1000, 500]);

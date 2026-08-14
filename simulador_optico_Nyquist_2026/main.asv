@@ -6,7 +6,7 @@ cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
 cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
-cfg_s.rolloff         = 0.9;        % Exceso de ancho de banda
+cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
 cfg_s.EbNo            = 12;         % Valor de EbNo para los graficos temporales/debugging
 
 % Sobremuestreo
@@ -17,14 +17,14 @@ cfg_s.NTAPS_RRC       = 51;         % Filtros transmisor
 cfg_s.en_carrier_recovery = 1;      % Habilita corrección en receptor
 
 %% 2. Canal y ruido
-cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
+cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco
 cfg_s.NTAPS_FIR       = 101;        % Coeficientes del canal
-cfg_s.ch_bw           = 15.75e9;    % Ancho de banda del canal (Leve)
+cfg_s.ch_bw           = 15.5e9;    % Ancho de banda del canal (Moderada)
 
 %% 3. Errores de portadora
-cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
+cfg_s.en_c_error      = 0;          % Habilita errores de portadora 
 % Errores Estáticos 
 cfg_s.delta_freq      = 0e6;       % Offset del LO
 cfg_s.phase_offset    = 0/180*pi;  % Error de fase
@@ -35,14 +35,14 @@ cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 
 cfg_s.phase_tone_amp  = 0.1;
-cfg_s.phase_tone_freq = 1e6;
+cfg_s.phase_tone_freq = 500e3;
 
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
 cfg_s.NTAPS_ffe       = 51;         % Cantidad de coeficientes del ecualizador
-cfg_s.cma_step        = 1e-4;       % Paso de adaptación para convergencia ciega (Reducir para modulaciones altas)
-cfg_s.dd_step         = 1e-4;       % Paso de adaptación para seguimiento fino
-cfg_s.leak            = 1e-6;       % Factor de pérdida (leakage)
+cfg_s.cma_step        = 1e-3;       % Paso de adaptación para convergencia ciega (Reducir para modulaciones altas)
+cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
+cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
@@ -66,15 +66,15 @@ cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la cu
 
 % Debug
 cfg_s.en_debug_plots  = 1;          % Habilita el llamado a debug_dashboard.m
-cfg_s.en_plots_rx     = 1;          % Habilita métricas internas del receptor
-cfg_s.debug_psd       = 1;          % Grafica Densidad Espectral de Potencia (PSD)
-cfg_s.debug_eye       = 1;          % Grafica Diagrama de Ojo
-cfg_s.debug_const     = 1;          % Grafica Constelación
+cfg_s.en_plots_rx     = 0;          % Habilita métricas internas del receptor
+cfg_s.debug_psd       = 0;          % Grafica Densidad Espectral de Potencia (PSD)
+cfg_s.debug_eye       = 0;          % Grafica Diagrama de Ojo
+cfg_s.debug_const     = 0;          % Grafica Constelación
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 
 % Vectores para Curva BER (Si en_curva_ber = 1)
-EbNo_BER              = 0:2:12;
-M_vec                 = [4 16];
+EbNo_BER              = 4:2:16;
+M_vec                 = [16];
 L_vec                 = 1e6 * ones(size(EbNo_BER));
 
 % Ejecución en bucle (BER Sweep)
@@ -106,6 +106,8 @@ fprintf('\n--- RESULTADOS FINALES ---\n');
 fprintf('MSE Final Ecualizador : %.2f dB\n', o_rx.MSE);
 fprintf('Tasa de Error (BER)   : %.4e\n', ber);
 fprintf('Total de errores      : %d\n', errors);
+% fprintf('snr estimada          : %.2f db\n',snr_est(end));
 
 % 6. Gráficos
 debug(cfg_s, o_tx_s, o_canal, o_rx);
+
