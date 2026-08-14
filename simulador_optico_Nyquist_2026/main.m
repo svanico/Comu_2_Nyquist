@@ -40,8 +40,8 @@ cfg_s.phase_tone_freq = 500e3;
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
 cfg_s.NTAPS_ffe       = 51;         % Cantidad de coeficientes del ecualizador
-cfg_s.cma_step        = 1e-4;       % Paso de adaptación para convergencia ciega (Reducir para modulaciones altas)
-cfg_s.dd_step         = 1e-4;       % Paso de adaptación para seguimiento fino
+cfg_s.cma_step        = 1e-3;       % Paso de adaptación para convergencia ciega (Reducir para modulaciones altas)
+cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
