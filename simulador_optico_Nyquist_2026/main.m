@@ -6,7 +6,7 @@ cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
 cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
-cfg_s.rolloff         = 0.9;        % Exceso de ancho de banda
+cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
 cfg_s.EbNo            = 12;         % Valor de EbNo para los graficos temporales/debugging
 
 % Sobremuestreo
