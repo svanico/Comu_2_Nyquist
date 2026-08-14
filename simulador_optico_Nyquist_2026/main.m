@@ -1,5 +1,5 @@
-clear; clc; close all;
-rng(1);
+% clear; clc; close all;
+% rng(1);
 
 %% 1. Parámetros generales
 cfg_s = struct();
@@ -130,19 +130,19 @@ end
 % ------------------------------------------------------------------------
 
 % Frecuencias de jitter a evaluar
-f_jitter_vec = logspace(4, 9, 20);   % 10 kHz a 1 GHz
+f_jitter_vec = logspace(log10(500e3), log10(5e8), 10);   % 500 kHz a 500 MHz
 
 % Reservamos memoria
 SNR_jitter_dB = zeros(size(f_jitter_vec));
 penalidad_SNR_dB = zeros(size(f_jitter_vec));
 
 
-%% 1. Transmisor
+%%1. Transmisor
 % No cambia con la frecuencia de jitter, por eso se genera una sola vez
 o_tx_s = transmisor_QAM(cfg_s);
 
 
-%% 2. SNR DE REFERENCIA - SIN JITTER
+%%2. SNR DE REFERENCIA - SIN JITTER
 cfg_ref = cfg_s;
 
 cfg_ref.en_c_error = 0;
@@ -153,10 +153,15 @@ rng(2);
 o_canal_ref = channel(o_tx_s.o_tx, cfg_ref);
 o_rx_ref    = Receiver(o_canal_ref, cfg_ref, o_tx_s.ak);
 
-% SNR medida a la entrada del slicer
-N_snr = min(1000, length(o_rx_ref.error_base_log));
+% % SNR medida a la entrada del slicer
+% N_snr = min(1000, length(o_rx_ref.error_base_log));
+% 
+% error_ss = o_rx_ref.error_base_log(end-N_snr+1:end);
 
-error_ss = o_rx_ref.error_base_log(end-N_snr+1:end);
+% Medición de SNR desde el inicio de DD hasta el final
+idx_snr_ini = floor(cfg_ref.t4_ffe_dd/10) + 1;
+
+error_ss = o_rx_ref.error_base_log(idx_snr_ini:end);
 
 P_signal = mean(abs(o_tx_s.ak).^2);
 P_error  = mean(abs(error_ss).^2);
@@ -166,7 +171,7 @@ SNR_ref_dB = 10*log10(P_signal/P_error);
 fprintf('\nSNR referencia sin jitter = %.2f dB\n', SNR_ref_dB);
 
 
-%% 3. BARRIDO DE FRECUENCIA DE JITTER
+%%3. BARRIDO DE FRECUENCIA DE JITTER
 
 for k = 1:length(f_jitter_vec)
 
@@ -197,9 +202,10 @@ for k = 1:length(f_jitter_vec)
 
 
     % SNR medida
-    N_snr = min(1000, length(o_rx.error_base_log));
+% Medición de SNR desde el inicio de DD hasta el final
+idx_snr_ini = floor(cfg_s.t4_ffe_dd/10) + 1;
 
-    error_ss = o_rx.error_base_log(end-N_snr+1:end);
+error_ss = o_rx.error_base_log(idx_snr_ini:end);
 
     P_error = mean(abs(error_ss).^2);
 
