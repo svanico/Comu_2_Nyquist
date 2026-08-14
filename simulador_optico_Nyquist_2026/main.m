@@ -1,4 +1,4 @@
-clear; clc; close all;
+% clear; clc; close all;
 rng(1);
 %% 1. Parámetros generales
 cfg_s = struct();
@@ -30,10 +30,10 @@ cfg_s.NTAPS_FIR       = 101;
 % cfg_s.ch_bw = 17.75e9;
 % 
 % % Moderada
-% cfg_s.ch_bw = 15.75e9;
+% cfg_s.ch_bw = 165e9;
 % 
 % % Agresiva
-cfg_s.ch_bw = 15e9;
+cfg_s.ch_bw = 15.5e9;
 
 
 
@@ -90,7 +90,7 @@ cfg_s.debug_const     = 1;          % Constelacion
 cfg_s.debug_Nsymbs    = 1e6;        % Cantidad de simbolos para graficar
 
 % Vectores para Curva BER ---
-EbNo_BER              = 0:1:12;
+EbNo_BER              = 4:1:16;
 M_vec                 = [16];
 % L_vec = [1e4, 1e4, 1e4, 1e5, 1e6, 1e7, 1e6, 1e6, 1e6]; % vector de símbolos variable para cada EbNo
 % L_vec                 = [1e6 1e6 1e6 1e6 1e5 1e5 3e5 3e5]; % subi los Lvec pq el time_cma = 50e3, pero en L_vec para los primeros Eb/No usás 1e4, 1e4, 1e4, 1e5. Entonces para varias simulaciones el receptor está todo o casi todo en etapa CMA, y aun así lo estás contando en la BER.
