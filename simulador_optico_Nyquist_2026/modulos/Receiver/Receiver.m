@@ -33,7 +33,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     th_high = (sqrt(10) + sqrt(18) )/2;
     Ki = i_cfg_s.Ki;
     Kp = i_cfg_s.Kp;
-    phase_detector = i_cfg_s.phase_detector;
+    phase_detector = i_cfg_s.phase_detector;    %esto lo uso para los incisos 2y3 del ej3
     FRAME_LOG_1x = 10; %guarda una muestra cada 10 símbolos.
     FRAME_LOG_2x = 10;
     
@@ -113,33 +113,53 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 else
                     last_detection = 0;
                 end
-            elseif idx_new < t3_fcr_dd
-
-                % FFE-CMA + RFD + FCR(4th Power)
-                if is_qpsk_like
-                    phase_error = mod(angle(slicer_in), pi/2) - pi/4; % FCR V4
-                    angle_curr = mod(angle(slicer_in), pi/2) - pi/4; % RFD
-                    if last_detection
-                        diff_angle = angle_curr - last_angle;
-                        if abs(diff_angle) > pi/4
-                            rfd_gain_value = -sign(diff_angle) * rfd_gain;
-                        end
-                    end
-                    last_angle = angle_curr; 
-                    last_detection = 1;
-                else
-                    last_detection = 0;
-                    rfd_gain_value = 0;
-                end
-            elseif idx_new < t4_ffe_dd
-
-                % FFE-CMA + FCR-DD
-                phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
-            else
-                % FFE-DD + FCR-DD
-                phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
-            end
+            % elseif idx_new < t3_fcr_dd
+            % 
+            %     % FFE-CMA + RFD + FCR(4th Power)
+            %     if is_qpsk_like
+            %         phase_error = mod(angle(slicer_in), pi/2) - pi/4; % FCR V4
+            %         angle_curr = mod(angle(slicer_in), pi/2) - pi/4; % RFD
+            %         if last_detection
+            %             diff_angle = angle_curr - last_angle;
+            %             if abs(diff_angle) > pi/4
+            %                 rfd_gain_value = -sign(diff_angle) * rfd_gain;
+            %             end
+            %         end
+            %         last_angle = angle_curr; 
+            %         last_detection = 1;
+            %     else
+            %         last_detection = 0;
+            %         rfd_gain_value = 0;
+            %     end
+            % elseif idx_new < t4_ffe_dd
+            % 
+            %     % FFE-CMA + FCR-DD
+            %     phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+            % else
+            %     % FFE-DD + FCR-DD
+            %     phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+            % end
             
+            else
+                % FCR activo: detector seleccionado desde el main
+            
+                if phase_detector == 1
+                    % Detector de fase 4th Power
+                    if is_qpsk_like
+                        phase_error = mod(angle(slicer_in), pi/2) - pi/4;
+                    else
+                        phase_error = 0;
+                    end
+            
+                elseif phase_detector == 2
+                    % Detector de fase Decision-Directed
+                    phase_error = imag(slicer_in * conj(slicer_out)) / ...
+                                  (abs(slicer_in) * abs(slicer_out));
+            
+                end
+                        end
+
+
             % PLL
             % phase_integral = phase_integral + Ki * phase_error + rfd_gain_value;
             % loop_filter_out = (Kp * phase_error) + phase_integral;

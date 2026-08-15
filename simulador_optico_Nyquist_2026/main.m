@@ -133,7 +133,7 @@ end
 % ------------------------------------------------------------------------
 
 % Frecuencias de jitter a evaluar
-f_jitter_vec = logspace(log10(500e3), log10(5e8), 10);   % 500 kHz a 500 MHz
+f_jitter_vec = logspace(log10(300e3), log10(3e8), 12);   % 300 GHz a 300 MHz
 
 % Reservamos memoria
 SNR_jitter_dB = zeros(size(f_jitter_vec));
