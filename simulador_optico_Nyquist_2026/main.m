@@ -45,7 +45,7 @@ cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
+cfg_s.Kp              = 3e-3;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
