@@ -49,6 +49,9 @@ cfg_s.Kp              = 3e-3;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
+
+cfg_s.phase_detector = 1;   % 1 = 4th power | 2 = DD
+
 % Timers (FSM RX)
 cfg_s.t1_rfd_frac    = 0.2;
 cfg_s.t2_fcr_v4_frac = 0.3;

@@ -33,6 +33,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     th_high = (sqrt(10) + sqrt(18) )/2;
     Ki = i_cfg_s.Ki;
     Kp = i_cfg_s.Kp;
+    phase_detector = i_cfg_s.phase_detector;
     FRAME_LOG_1x = 10; %guarda una muestra cada 10 símbolos.
     FRAME_LOG_2x = 10;
     
