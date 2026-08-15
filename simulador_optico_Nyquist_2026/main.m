@@ -45,12 +45,12 @@ cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 3e-3;       % Ganancia proporcional del PLL
+cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
 
-cfg_s.phase_detector = 1;   % 1 = 4th power | 2 = DD
+cfg_s.phase_detector = 2;   % 1 = 4th power | 2 = DD
 
 % Timers (FSM RX)
 cfg_s.t1_rfd_frac    = 0.2;
@@ -226,7 +226,19 @@ error_ss = o_rx.error_base_log(idx_snr_ini:end);
              penalidad_SNR_dB(k));
 
 end
-%% 4. Gráfico de penalidad
+
+%%Guardar resultados de esta corrida de Kp
+archivo = sprintf('penalidad_Kp_%.0e.mat', cfg_s.Kp);
+
+save(archivo, ...
+     'f_jitter_vec', ...
+     'penalidad_SNR_dB', ...
+     'SNR_jitter_dB', ...
+     'SNR_ref_dB');
+
+fprintf('Resultados guardados en: %s\n', archivo);
+
+%%4. Gráfico de penalidad
 
 figure;
 
