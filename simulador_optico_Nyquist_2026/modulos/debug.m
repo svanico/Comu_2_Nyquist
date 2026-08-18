@@ -225,9 +225,19 @@ function debug(cfg, tx, ch, rx)
             
             % --- Subplot 1: Trayectoria de Fase (NCO) ---
             subplot(2,3,1);
-            plot(symb_axis, rx.phase_acc_log, 'LineWidth', 1.5, 'Color', '#77AC30');
+            
+            % Envolvemos la fase para que no se escape a infinito
+            fase_envuelta = wrapToPi(rx.phase_acc_log);
+            
+            plot(symb_axis, fase_envuelta, 'LineWidth', 1.5, 'Color', '#77AC30');
             grid on; hold on;
             xline(cfg.t2_fcr_v4, 'r--', 'FCR ON', 'LabelVerticalAlignment', 'bottom');
+            
+            % Agregamos límites fijos en el eje Y para ver mejor los saltos
+            ylim([-pi, pi]);
+            yticks([-pi, -pi/2, 0, pi/2, pi]);
+            yticklabels({'-\pi', '-\pi/2', '0', '\pi/2', '\pi'});
+            
             xlabel('Símbolos', 'FontWeight', 'bold'); 
             ylabel('Ángulo de Corrección [rad]', 'FontWeight', 'bold');
             title('Trayectoria de Fase (NCO)');

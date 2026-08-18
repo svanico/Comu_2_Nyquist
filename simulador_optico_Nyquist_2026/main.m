@@ -6,7 +6,7 @@ cfg_s.BR              = 32e9;       % Baud rate
 cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 100;         % Valor de EbNo para los graficos temporales/debugging
+cfg_s.EbNo            = 16;         % Valor de EbNo para los graficos temporales/debugging
 
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
@@ -16,7 +16,7 @@ cfg_s.NTAPS_RRC       = 101;         % Filtros transmisor
 cfg_s.en_carrier_recovery = 1;      % Habilita corrección en receptor
 
 %% 2. Canal y ruido
-cfg_s.en_ch_filter    = 0;          % Habilita filtro del canal
+cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco
 cfg_s.NTAPS_FIR       = 51;        % Coeficientes del canal
@@ -62,10 +62,10 @@ cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FF
 cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 
 % Debug
-cfg_s.en_plots_tx     = 1; 
+cfg_s.en_plots_tx     = 0; 
 cfg_s.en_plots_rx     = 1;            % Habilita métricas internas del receptor
-cfg_s.debug_psd       = 1;            % Grafica Densidad Espectral de Potencia (PSD)
-cfg_s.debug_eye       = 1;            % Grafica Diagrama de Ojo
+cfg_s.debug_psd       = 0;            % Grafica Densidad Espectral de Potencia (PSD)
+cfg_s.debug_eye       = 0;            % Grafica Diagrama de Ojo
 cfg_s.debug_const     = 1;            % Grafica Constelación
 cfg_s.debug_Nsymbs    = cfg_s.Lsymbs; % Cantidad de simbolos para graficar
 

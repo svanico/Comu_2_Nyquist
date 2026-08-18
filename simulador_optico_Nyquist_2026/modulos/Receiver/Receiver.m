@@ -37,11 +37,11 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     FRAME_LOG_2x = 10;
     
     %% Anti Alias Filter
-    [~,h_taps_ps] = root_raised_cosine(BR, BR*ovs_ch, rolloff, NTAPS, t0); 
+    [~,htaps_aaf] = root_raised_cosine(BR, BR*ovs_ch, rolloff, NTAPS, t0); 
     
     %Compensación del retardo de grupo
     delay_aaf = floor((NTAPS-1)/2);
-    aaf_out_raw = filter(h_taps_ps, 1, [i_rx(:); zeros(NTAPS-1, 1)]);
+    aaf_out_raw = filter(htaps_aaf, 1, [i_rx(:); zeros(NTAPS-1, 1)]);
     aaf_out = aaf_out_raw(delay_aaf+1 : end-delay_aaf);
     o_data_rx.y = aaf_out;
     
@@ -322,6 +322,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     o_data_rx.phase_acc_log = phase_acc_log;
     o_data_rx.phase_integral_log = phase_integral_log;
     o_data_rx.htaps = htaps;
+    o_data_rx.htaps_aaf = htaps_aaf;
     o_data_rx.ffe_out_log = ffe_out_log;
     o_data_rx.ovs_ffe = ovs_ffe;
     o_data_rx.phase_error_log = phase_error_log;
