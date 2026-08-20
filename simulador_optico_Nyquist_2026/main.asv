@@ -4,7 +4,7 @@ clear; clc; close all;
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
 cfg_s.M               = 16;         % Orden de modulacion
-cfg_s.Lsymbs          = 3e6;        % Cantidad de simbolos
+cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
 cfg_s.EbNo            = 16;         % Valor de EbNo para los graficos temporales/debugging
 
@@ -25,7 +25,7 @@ cfg_s.ch_bw           = 16e9;       % Ancho de banda del canal (leve)
 cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
 % Errores Estáticos 
 cfg_s.delta_freq      = 0e6;        % Offset del LO
-cfg_s.delta_freq_vec  = -cfg_s.BR/12 : cfg_s.BR/60 : cfg_s.BR/12;
+cfg_s.delta_freq_vec  = -cfg_s.BR/12 : cfg_s.BR/120 : cfg_s.BR/12;
 cfg_s.phase_offset    = 0/180*pi;   % Error de fase
 cfg_s.LW              = 0e3;        % Ancho de linea [Hz] -> Ruido de fase
 % Fluctuaciones
@@ -78,6 +78,7 @@ if cfg_s.en_carrier_recovery
     colores = lines(length(cfg_s.delta_freq_vec)); 
 end
 
+% Asumo FRAME_LOG = 1, si tu simulador usa otro valor cambialo acá.
 FRAME_LOG = 1; 
 
 for i=1:(length(cfg_s.delta_freq_vec)) 

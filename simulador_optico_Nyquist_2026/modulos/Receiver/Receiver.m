@@ -213,7 +213,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     s_in_cs.WINDOW_LEN = 50;
     s_in_cs.M = M;
     
-    [s_out_cs] = dinamic_CS_corrector(s_in_cs);
+    s_out_cs = dinamic_CS_corrector(s_in_cs);
     ak_tx_aligned_trunc = ak_aligned(1 : length(s_out_cs.orx_cs_fixed));
     
     %% Chequeo alternativo: corrección global de cuadrante

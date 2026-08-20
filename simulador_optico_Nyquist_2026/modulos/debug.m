@@ -99,38 +99,6 @@ function debug(cfg, tx, ch, rx)
         end
         
         % ----------------------------------------------------------------------
-        % 2. MÉTRICAS DEL AGC
-        % ----------------------------------------------------------------------
-        figure('Name', '4. Acción del AGC', 'Color', 'w', 'Position', [150, 150, 1000, 500]);
-        
-        N_plot = min(2000, length(rx.agc_in)); 
-        eje_n = 1:N_plot;
-        
-        subplot(2,2,1);
-        plot(eje_n, abs(rx.agc_in(1:N_plot)), 'Color', '#7E2F8E');
-        grid on; box on;
-        ylabel('Magnitud Absoluta', 'FontWeight', 'bold');
-        title('Señal de entrada (Directa del Canal)');
-        
-        subplot(2,2,3);
-        plot(eje_n, abs(rx.agc_out(1:N_plot)), 'Color', '#0072BD');
-        grid on; box on;
-        xlabel('Muestras', 'FontWeight', 'bold');
-        ylabel('Magnitud Absoluta', 'FontWeight', 'bold');
-        media_salida = mean(abs(rx.agc_out));
-        title(sprintf('Señal de salida AGC (Media: %.3f)', media_salida));
-        
-        subplot(2,2,[2, 4]);
-        hold on;
-        histogram(abs(rx.agc_in), 50, 'Normalization', 'pdf', 'FaceColor', '#7E2F8E', 'FaceAlpha', 0.6, 'DisplayName', 'Entrada');
-        histogram(abs(rx.agc_out), 50, 'Normalization', 'pdf', 'FaceColor', '#0072BD', 'FaceAlpha', 0.6, 'DisplayName', 'Salida (Target AGC)');
-        grid on; box on; hold off;
-        legend('Location', 'northeast');
-        xlabel('Magnitud Absoluta', 'FontWeight', 'bold');
-        ylabel('Densidad de Probabilidad', 'FontWeight', 'bold');
-        title('Distribución de Amplitudes (Varianza Normalizada)');
-
-        % ----------------------------------------------------------------------
         % 3. ECUALIZADOR (Convergencia, SNR, evolución taps, rta temporal y frecuencial)
         % ----------------------------------------------------------------------
         figure('Name', '3. Dinámica del Ecualizador FFE', 'Color', 'w', 'Position', [100, 100, 1600, 700]);
@@ -255,7 +223,7 @@ function debug(cfg, tx, ch, rx)
             ylabel('Offset Estimado [MHz]', 'FontWeight', 'bold');
             title('Seguimiento de Frecuencia');
 
-% --- Subplot 3: Respuesta en Frecuencia del PLL (Bode FCR) ---
+            % --- Subplot 3: Respuesta en Frecuencia del PLL (Bode FCR) ---
             subplot(2,3,3);
             if isfield(cfg, 'Kp') && isfield(cfg, 'Ki')
                 % 1. Extracción de variables
