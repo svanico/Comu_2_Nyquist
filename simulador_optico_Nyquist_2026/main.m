@@ -1,5 +1,5 @@
-% clear; clc; close all;
-% rng(1);
+%clear; clc; %close all;
+rng(1);
 
 %% 1. Parámetros generales
 cfg_s = struct();
@@ -35,7 +35,7 @@ cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 
 cfg_s.phase_tone_amp  = 0.1;
-cfg_s.phase_tone_freq = 500e3;
+cfg_s.phase_tone_freq = 7e6;
 
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
@@ -45,7 +45,7 @@ cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
+cfg_s.Kp              = 1e-2;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
@@ -85,9 +85,9 @@ if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
 
-% ------------------------------------------------------------------------
-% Ejecución de Caso Individual (Debugging)
-% ------------------------------------------------------------------------
+% % ------------------------------------------------------------------------
+% % Ejecución de Caso Individual (Debugging)
+% % ------------------------------------------------------------------------
 % fprintf(['\nCASO INDIVIDUAL: M = %d | EbNo = %.1f dB | ' ...
 %          'Lsymbs = %d | rfd_gain = %.1e\n'], ...
 %         cfg_s.M, cfg_s.EbNo, cfg_s.Lsymbs, cfg_s.rfd_gain);
@@ -126,6 +126,7 @@ end
 % 
 % % 6. Gráficos
 % debug(cfg_s, o_tx_s, o_canal, o_rx);
+% 
 % 
 
 % ------------------------------------------------------------------------
