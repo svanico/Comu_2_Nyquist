@@ -46,7 +46,7 @@ cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 1e-4;       % Ganancia proporcional del PLL
-cfg_s.Ki              = cfg_s.Kp/1500; % Ganancia integral del PLL
+cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
 
