@@ -35,7 +35,7 @@ cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 
 cfg_s.phase_tone_amp  = 0.1;
-cfg_s.phase_tone_freq = 7e6;
+cfg_s.phase_tone_freq = 3e6;
 
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
@@ -45,7 +45,7 @@ cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 1e-2;       % Ganancia proporcional del PLL
+cfg_s.Kp              = 1e-4;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
@@ -84,7 +84,7 @@ L_vec                 = 1e6 * ones(size(EbNo_BER));
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
-
+% 
 % % ------------------------------------------------------------------------
 % % Ejecución de Caso Individual (Debugging)
 % % ------------------------------------------------------------------------
@@ -106,14 +106,26 @@ end
 % 
 % 
 % % SNR medida
-% N_snr = min(1000, length(o_rx.error_base_log));
+% % N_snr = min(1000, length(o_rx.error_base_log));
+% % 
+% % error_ss = o_rx.error_base_log(end-N_snr+1:end);
 % 
-% error_ss = o_rx.error_base_log(end-N_snr+1:end);
+% % SNR medida con la misma ventana usada en el barrido
+% idx_snr_ini = floor(cfg_s.t4_ffe_dd/10) + 1;
+% 
+% error_ss = o_rx.error_base_log(idx_snr_ini:end);
 % 
 % P_signal = mean(abs(o_tx_s.ak).^2);
 % P_error  = mean(abs(error_ss).^2);
 % 
 % SNR_rx_dB = 10*log10(P_signal/P_error);
+% 
+% 
+% % 
+% % P_signal = mean(abs(o_tx_s.ak).^2);
+% % P_error  = mean(abs(error_ss).^2);
+% % 
+% % SNR_rx_dB = 10*log10(P_signal/P_error);
 % 
 % 
 % 
@@ -122,19 +134,22 @@ end
 % fprintf('MSE Final Ecualizador : %.2f dB\n', o_rx.MSE);
 % fprintf('Tasa de Error (BER)   : %.4e\n', ber);
 % fprintf('Total de errores      : %d\n', errors);
-% fprintf('SNR medida a la entrada del slicer = %.2f dB\n', SNR_rx_dB);
-% 
+% fprintf('SNR medida a la entrada del slicer = %.4f dB\n', SNR_rx_dB);
+
 % % 6. Gráficos
 % debug(cfg_s, o_tx_s, o_canal, o_rx);
 % 
 % 
-
+% 
 % ------------------------------------------------------------------------
 % EJERCICIO 3 - BARRIDO DE FRECUENCIA DE JITTER
 % ------------------------------------------------------------------------
 
 % Frecuencias de jitter a evaluar
-f_jitter_vec = logspace(log10(300e3), log10(3e8), 12);   % 300 GHz a 300 MHz
+% f_jitter_vec = logspace(log10(300e3), log10(3e8), 12);   % 300 GHz a 300 MHz
+f_jitter_vec = [300e3 500e3 750e3 1e6 1.25e6 1.5e6 1.75e6 ...
+                2e6 2.25e6 2.5e6 3e6 4e6 5e6 7.5e6 10e6 ...
+                20e6 50e6 100e6 300e6];
 
 % Reservamos memoria
 SNR_jitter_dB = zeros(size(f_jitter_vec));
