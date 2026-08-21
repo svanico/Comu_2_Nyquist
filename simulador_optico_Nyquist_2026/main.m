@@ -1,4 +1,4 @@
-%clear; clc; %close all;
+% clear; clc; %close all;
 rng(1);
 
 %% 1. Parámetros generales
@@ -35,7 +35,7 @@ cfg_s.freq_fluct_amp  = 0;
 cfg_s.freq_fluct_freq = 0e3;
 
 cfg_s.phase_tone_amp  = 0.1;
-cfg_s.phase_tone_freq = 3e6;
+cfg_s.phase_tone_freq = 2e6;
 
 %% 4. Receptor (Ecualizador y Recuperador de Portadora)
 % Parámetros del Ecualizador (FFE)
@@ -46,7 +46,7 @@ cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 1e-4;       % Ganancia proporcional del PLL
-cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
+cfg_s.Ki              = cfg_s.Kp/1500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
 
@@ -68,8 +68,8 @@ cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FF
 cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 
 % Debug
-cfg_s.en_debug_plots  = 0;          % Habilita el llamado a debug_dashboard.m
-cfg_s.en_plots_rx     = 0;          % Habilita métricas internas del receptor
+cfg_s.en_debug_plots  = 1;          % Habilita el llamado a debug_dashboard.m
+cfg_s.en_plots_rx     = 1;          % Habilita métricas internas del receptor
 cfg_s.debug_psd       = 0;          % Grafica Densidad Espectral de Potencia (PSD)
 cfg_s.debug_eye       = 0;          % Grafica Diagrama de Ojo
 cfg_s.debug_const     = 0;          % Grafica Constelación
@@ -84,7 +84,7 @@ L_vec                 = 1e6 * ones(size(EbNo_BER));
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 end
-% 
+
 % % ------------------------------------------------------------------------
 % % Ejecución de Caso Individual (Debugging)
 % % ------------------------------------------------------------------------
@@ -135,9 +135,11 @@ end
 % fprintf('Tasa de Error (BER)   : %.4e\n', ber);
 % fprintf('Total de errores      : %d\n', errors);
 % fprintf('SNR medida a la entrada del slicer = %.4f dB\n', SNR_rx_dB);
-
+% 
 % % 6. Gráficos
 % debug(cfg_s, o_tx_s, o_canal, o_rx);
+
+
 % 
 % 
 % 
@@ -211,7 +213,7 @@ for k = 1:length(f_jitter_vec)
 
 
     % Misma realización de AWGN para todos los puntos
-    rng(2);
+    rng(1);
 
     % Canal
     o_canal = channel(o_tx_s.o_tx, cfg_jit);
