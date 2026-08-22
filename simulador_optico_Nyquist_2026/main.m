@@ -1,5 +1,5 @@
 clear; clc; close all;
-
+rng(1);                 % Para que las simulaciones sean repetibles
 %% 1. Parámetros generales
 cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
@@ -19,13 +19,16 @@ cfg_s.en_ch_filter    = 1;          % Habilita filtro del canal
 cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco
 cfg_s.NTAPS_FIR       = 51;         % Coeficientes del canal
-cfg_s.ch_bw           = 17.75e9;    % Ancho de banda del canal (leve)
+% cfg_s.ch_bw           = 17.75e9;    % Ancho de banda del canal (leve)
+cfg_s.ch_bw           = 16e9;    % Ancho de banda del canal (moderada)
+% cfg_s.ch_bw           = 15.5e9;    % Ancho de banda del canal (agresiva)
+
 
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
 % Errores Estáticos 
 cfg_s.delta_freq      = 0e6;        % Offset del LO
-cfg_s.phase_offset    = 30/180*pi;  % Error de fase
+cfg_s.phase_offset    = 00/180*pi;  % Error de fase
 cfg_s.LW              = 0e3;        % Ancho de linea [Hz] -> Ruido de fase
 % Fluctuaciones
 cfg_s.freq_fluct_amp  = 0;
@@ -45,6 +48,10 @@ cfg_s.Kp              = 10e-3;      % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 1e-4;       % Ganancia del detector de frecuencia
 
+cfg_s.phase_detector = 1;   % 0 = funcionamiento normal de la FSM
+                            % 1 = solo detector 4th power (Ej. 3)
+                            % 2 = solo detector DD (Ej. 3)
+
 % Timers (FSM RX)
 cfg_s.t1_rfd_frac    = 0.2;
 cfg_s.t2_fcr_v4_frac = 0.3;
@@ -56,13 +63,14 @@ cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 4 (FC
 cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
+cfg_s.en_ej_3       = 1;     % <--- 1: Ejecuta Ejercicio 3
 cfg_s.en_ej_4  = 0;          % <--- 1: Ejecuta barrido (Ej. 4). 0: Ejecuta caso individual.
 cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 
 % --- Herramientas de Debugging General ---
 cfg_s.en_plots_tx     = 0; 
-cfg_s.en_plots_rx     = 1;          % Habilita métricas internas del receptor
-cfg_s.en_debug_plots  = 1;          % Habilita bloque entero de debugging
+cfg_s.en_plots_rx     = 0;          % Habilita métricas internas del receptor
+cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % Grafica Densidad Espectral de Potencia (PSD)
 cfg_s.debug_eye       = 0;          % Grafica Diagrama de Ojo
 cfg_s.debug_const     = 1;          % Grafica Constelación
@@ -76,11 +84,16 @@ L_vec                 = 1e6 * ones(size(EbNo_BER));
 %% 6. EJECUCIÓN PRINCIPAL
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
-end
 
-if cfg_s.en_ej_4
+
+elseif cfg_s.en_ej_3
+    % llamo a la función que resuelve el Ejercicio 3
+    ej_3(cfg_s); 
+
+elseif cfg_s.en_ej_4
     % Llama a la función que resuelve el Ejercicio 4
     ej_4(cfg_s);
+
 else
     % Ejecución
     fprintf('\nSimulacion: M = %d | EbNo = %.1f dB | Lsymbs = %d | rfd_gain = %.1e\n', ...

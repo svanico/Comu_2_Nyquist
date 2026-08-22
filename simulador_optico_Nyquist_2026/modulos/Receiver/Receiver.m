@@ -9,7 +9,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     ovs_ffe = i_cfg_s.OVS.DSP;
     rolloff = i_cfg_s.rolloff;
     t0 = 0;
-    agc_target = .3; %esto es a ojo (creemos)
+    agc_target = .3; %esto es a ojo 
     
     % R_CMA = cfg_s.R_CMA;
     % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
@@ -33,7 +33,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     th_high = (sqrt(10) + sqrt(18) )/2;
     Ki = i_cfg_s.Ki;
     Kp = i_cfg_s.Kp;
-    FRAME_LOG_1x = 10; %guarda una muestra cada 10 símbolos.
+    phase_detector = i_cfg_s.phase_detector;    %Esto lo uso para los incisos 2y3 del ej3
+    FRAME_LOG_1x = 10;                          %Guarda una muestra cada 10 símbolos.
     FRAME_LOG_2x = 10;
     
     %% Anti Alias Filter
@@ -75,7 +76,6 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     htaps_log = zeros(NTAPS_ffe, ceil(Lsymbs/FRAME_LOG_1x));
     
     for idx=1:length(agc_out) %a tasa de sobremuestreo
-<<<<<<< HEAD
         buffer_filter(2:end) = buffer_filter(1:end-1); 
         buffer_filter(1) = agc_out(idx);               
                                                 %antes: [x1 x2 x3 x4] ; después
@@ -83,14 +83,6 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                                                 %después de meter muestra nueva: [x_new x1 x2 x3]
 
         ffe_out = htaps.'*buffer_filter;        %filtra
-=======
-        buffer_filter(2:end) = buffer_filter(1:end-1);
-        buffer_filter(1) = agc_out(idx);
-        %antes: [x1 x2 x3 x4] ; después
-        %del shift: [x1 x1 x2 x3] ;
-        %después de meter muestra nueva: [x_new x1 x2 x3]
-        ffe_out = htaps.'*buffer_filter; %filtra
->>>>>>> tp1_ej1
         
         if mod(idx,ovs_ffe)==0 % calculo el resto, si da 0, continuo (downsampling)
             idx_new = ceil(idx/ovs_ffe); % Convierte el índice de muestra idx en índice de símbolo
@@ -104,79 +96,185 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
             phase_error = 0;
             rfd_gain_value = 0;
             
+%             % Etapas 1 a 5
+%             if idx_new < t1_rfd
+%                 % FFE-CMA
+%             elseif idx_new < t2_fcr_v4
+%                 % FFE-CMA + RFD
+%                 if is_qpsk_like
+%                     angle_curr = mod(angle(slicer_in), pi/2) - pi/4;
+%                     if last_detection
+%                         diff_angle = angle_curr - last_angle;
+%                         if abs(diff_angle) > pi/4
+%                             rfd_gain_value = -sign(diff_angle) * rfd_gain;
+%                         end
+%                     end
+%                     last_angle = angle_curr;
+%                     last_detection = 1;
+%                 else
+%                     last_detection = 0;
+%                 end
+% 
+%             elseif idx_new < t3_fcr_dd
+% 
+%                 % FFE-CMA + RFD + FCR(4th Power)
+%                 if is_qpsk_like
+%                     phase_error = mod(angle(slicer_in), pi/2) - pi/4; % FCR V4
+%                     angle_curr = mod(angle(slicer_in), pi/2) - pi/4; % RFD
+%                     if last_detection
+%                         diff_angle = angle_curr - last_angle;
+%                         if abs(diff_angle) > pi/4
+%                             rfd_gain_value = -sign(diff_angle) * rfd_gain;
+%                         end
+%                     end
+%                     last_angle = angle_curr; 
+%                     last_detection = 1;
+%                 else
+%                     last_detection = 0;
+%                     rfd_gain_value = 0;
+%                 end
+%             elseif idx_new < t4_ffe_dd
+% 
+%                 % FFE-CMA + FCR-DD
+%                 phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+%             else
+% <<<<<<< HEAD
+%                 % 1. DEROTACIÓN (Fasor negativo)
+%                 slicer_in = slicer_in_raw * exp(-1j * phase_acc);
+% 
+%                 % 2. DECISIÓN (Slicer)
+%                 slicer_out = slicer(slicer_in, M);   
+% 
+%                 % 3. DETECTOR DE ERROR DE FASE (PED)
+%                 phase_error = angle(slicer_in * conj(slicer_out));
+% 
+%                 % 4. FILTRO DE LAZO (Loop Filter PI)
+%                 phase_integral = phase_integral + Ki * phase_error;
+%                 loop_filter_out = (Kp * phase_error) + phase_integral;
+% 
+%                 % 5. ACUMULADOR DE FASE DEL NCO (Suma para el próximo símbolo)
+%                 phase_acc = phase_acc + loop_filter_out;
+% 
+%                 % 6. CÁLCULO DE ERROR PARA LMS
+%                 % error_base = slicer_in - slicer_out; 
+% 
+%                 % 7. REALIMENTACIÓN LMS (Multiplicado por fasor positivo/conjugado)
+%                 error =  (slicer_in - slicer_out) * exp(1j * phase_acc); 
+% =======
+%                 % FFE-DD + FCR-DD
+%                 phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+%             end
+% 
+%             % PLL
+%             % phase_integral = phase_integral + Ki * phase_error + rfd_gain_value;
+%             % loop_filter_out = (Kp * phase_error) + phase_integral;
+%             % phase_acc = phase_acc + loop_filter_out;
+% 
+
+
+
             % Etapas 1 a 5
             if idx_new < t1_rfd
+            
                 % FFE-CMA
+            
+            
             elseif idx_new < t2_fcr_v4
+            
                 % FFE-CMA + RFD
                 if is_qpsk_like
                     angle_curr = mod(angle(slicer_in), pi/2) - pi/4;
+            
                     if last_detection
                         diff_angle = angle_curr - last_angle;
+            
                         if abs(diff_angle) > pi/4
                             rfd_gain_value = -sign(diff_angle) * rfd_gain;
                         end
                     end
+            
                     last_angle = angle_curr;
                     last_detection = 1;
+            
                 else
                     last_detection = 0;
                 end
-            elseif idx_new < t3_fcr_dd
-
-                % FFE-CMA + RFD + FCR(4th Power)
-                if is_qpsk_like
-                    phase_error = mod(angle(slicer_in), pi/2) - pi/4; % FCR V4
-                    angle_curr = mod(angle(slicer_in), pi/2) - pi/4; % RFD
-                    if last_detection
-                        diff_angle = angle_curr - last_angle;
-                        if abs(diff_angle) > pi/4
-                            rfd_gain_value = -sign(diff_angle) * rfd_gain;
-                        end
-                    end
-                    last_angle = angle_curr; 
-                    last_detection = 1;
-                else
-                    last_detection = 0;
-                    rfd_gain_value = 0;
-                end
-            elseif idx_new < t4_ffe_dd
-
-                % FFE-CMA + FCR-DD
-                phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+            
+            
             else
-<<<<<<< HEAD
-                % 1. DEROTACIÓN (Fasor negativo)
-                slicer_in = slicer_in_raw * exp(-1j * phase_acc);
-                
-                % 2. DECISIÓN (Slicer)
-                slicer_out = slicer(slicer_in, M);   
-                
-                % 3. DETECTOR DE ERROR DE FASE (PED)
-                phase_error = angle(slicer_in * conj(slicer_out));
-                
-                % 4. FILTRO DE LAZO (Loop Filter PI)
-                phase_integral = phase_integral + Ki * phase_error;
-                loop_filter_out = (Kp * phase_error) + phase_integral;
-                
-                % 5. ACUMULADOR DE FASE DEL NCO (Suma para el próximo símbolo)
-                phase_acc = phase_acc + loop_filter_out;
-                
-                % 6. CÁLCULO DE ERROR PARA LMS
-                % error_base = slicer_in - slicer_out; 
-                
-                % 7. REALIMENTACIÓN LMS (Multiplicado por fasor positivo/conjugado)
-                error =  (slicer_in - slicer_out) * exp(1j * phase_acc); 
-=======
-                % FFE-DD + FCR-DD
-                phase_error = imag(slicer_in * conj(slicer_out))/(abs(slicer_in) * abs(slicer_out));
+            
+                % =========================================================
+                % phase_detector = 0 -> funcionamiento normal del receptor
+                % =========================================================
+                if phase_detector == 0
+            
+                    if idx_new < t3_fcr_dd
+            
+                        % FFE-CMA + RFD + FCR 4th Power
+                        if is_qpsk_like
+            
+                            phase_error = mod(angle(slicer_in), pi/2) - pi/4;
+            
+                            angle_curr = mod(angle(slicer_in), pi/2) - pi/4;
+            
+                            if last_detection
+                                diff_angle = angle_curr - last_angle;
+            
+                                if abs(diff_angle) > pi/4
+                                    rfd_gain_value = -sign(diff_angle) * rfd_gain;
+                                end
+                            end
+            
+                            last_angle = angle_curr;
+                            last_detection = 1;
+            
+                        else
+                            last_detection = 0;
+                            rfd_gain_value = 0;
+                        end
+            
+            
+                    elseif idx_new < t4_ffe_dd
+            
+                        % FFE-CMA + FCR-DD
+                        phase_error = imag(slicer_in * conj(slicer_out)) / ...
+                                      (abs(slicer_in) * abs(slicer_out));
+            
+            
+                    else
+            
+                        % FFE-DD + FCR-DD
+                        phase_error = imag(slicer_in * conj(slicer_out)) / ...
+                                      (abs(slicer_in) * abs(slicer_out));
+            
+                    end
+            
+            
+                % =========================================================
+                % phase_detector = 1 -> solo 4th Power (Ejercicio 3)
+                % =========================================================
+                elseif phase_detector == 1
+            
+                    if is_qpsk_like
+                        phase_error = mod(angle(slicer_in), pi/2) - pi/4;
+                    else
+                        phase_error = 0;
+                    end
+            
+            
+                % =========================================================
+                % phase_detector = 2 -> solo DD (Ejercicio 3)
+                % =========================================================
+                elseif phase_detector == 2
+            
+                    phase_error = imag(slicer_in * conj(slicer_out)) / ...
+                                  (abs(slicer_in) * abs(slicer_out));
+            
+                end
+            
             end
-            
-            % PLL
-            % phase_integral = phase_integral + Ki * phase_error + rfd_gain_value;
-            % loop_filter_out = (Kp * phase_error) + phase_integral;
-            % phase_acc = phase_acc + loop_filter_out;
-            
+
+
             % PLL
             if i_cfg_s.en_carrier_recovery
                 phase_integral = phase_integral ...
@@ -200,7 +298,6 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
                 % Etapa 5 usa LMS (DD)
                 error_base = slicer_in - slicer_out;
                 error = error_base * exp(1j * phase_acc);
->>>>>>> tp1_ej1
                 step = dd_step;
             end
             
