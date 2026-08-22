@@ -25,10 +25,10 @@ semilogx(kp4.f_jitter_vec, kp4.penalidad_SNR_dB, '-o', ...
 grid on;
 xlabel('Frecuencia de Jitter [Hz]');
 ylabel('Penalidad de SNR [dB]');
-title('Penalidad de SNR vs Frecuencia de Jitter - Detector DD');
+title('Penalidad de SNR vs Frecuencia de Jitter - Detector 4th Orden');
 legend('Location','best');
 
-xlim([5e5 5e8]);
-ylim([0 2.5]);
+xlim([2e5 5e8]);
+ylim([0 1.13]);
 
 hold off;

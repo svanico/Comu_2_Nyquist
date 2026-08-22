@@ -45,12 +45,12 @@ cfg_s.dd_step         = 1e-3;       % Paso de adaptación para seguimiento fino
 cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 
 % Parámetros del PLL y RFD
-cfg_s.Kp              = 1e-4;       % Ganancia proporcional del PLL
-cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral del PLL
+cfg_s.Kp              = 1e-5;       % Ganancia proporcional del PLL
+cfg_s.Ki              = cfg_s.Kp/1500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 0;       % apagado
 
 
-cfg_s.phase_detector = 2;   % 1 = 4th power | 2 = DD
+cfg_s.phase_detector = 1;   % 1 = 4th power | 2 = DD
 
 % Timers (FSM RX)
 cfg_s.t1_rfd_frac    = 0.2;
@@ -148,8 +148,8 @@ end
 % ------------------------------------------------------------------------
 
 % Frecuencias de jitter a evaluar
-% f_jitter_vec = logspace(log10(300e3), log10(3e8), 12);   % 300 GHz a 300 MHz
-f_jitter_vec = [300e3 500e3 750e3 1e6 1.25e6 1.5e6 1.75e6 ...
+% f_jitter_vec = logspace(log10(300e3), log10(3e8), 15);   % 300 GHz a 300 MHz
+f_jitter_vec = [400e3 500e3 750e3 1e6 1.25e6 1.5e6 1.75e6 ...
                 2e6 2.25e6 2.5e6 3e6 4e6 5e6 7.5e6 10e6 ...
                 20e6 50e6 100e6 300e6];
 
