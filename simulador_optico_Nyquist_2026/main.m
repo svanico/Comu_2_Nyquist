@@ -63,8 +63,9 @@ cfg_s.t3_fcr_dd = fix(cfg_s.t3_fcr_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 4 (FC
 cfg_s.t4_ffe_dd = fix(cfg_s.t4_ffe_dd_frac * cfg_s.Lsymbs); % Pasa a Etapa 5 (FFE a DD LMS)
 
 %% 5. CONFIGURACIÓN DE SIMULACIONES Y DEBUGGING
-cfg_s.en_ej_3       = 1;     % <--- 1: Ejecuta Ejercicio 3
-cfg_s.en_ej_4  = 0;          % <--- 1: Ejecuta barrido (Ej. 4). 0: Ejecuta caso individual.
+cfg_s.en_ej_2         = 1;          % <--- 1: Ejecuta Ejercicio 2
+cfg_s.en_ej_3         = 0;          % <--- 1: Ejecuta Ejercicio 3
+cfg_s.en_ej_4         = 0;          % <--- 1: Ejecuta barrido (Ej. 4). 0: Ejecuta caso individual.
 cfg_s.en_curva_ber    = 0;          % Habilitar simulacion en cascada para la curva ber
 
 % --- Herramientas de Debugging General ---
@@ -73,9 +74,8 @@ cfg_s.en_plots_rx     = 0;          % Habilita métricas internas del receptor
 cfg_s.en_debug_plots  = 0;          % Habilita bloque entero de debugging
 cfg_s.debug_psd       = 0;          % Grafica Densidad Espectral de Potencia (PSD)
 cfg_s.debug_eye       = 0;          % Grafica Diagrama de Ojo
-cfg_s.debug_const     = 1;          % Grafica Constelación
-cfg_s.debug_Nsymbs    = cfg_s.Lsymbs; % Cantidad de simbolos para graficar
-
+cfg_s.debug_const     = 0;          % Grafica Constelación
+cfg_s.debug_Nsymbs    = cfg_s.Lsymbs
 % --- Vectores para Curva BER ---
 EbNo_BER              = 0:2:12;
 M_vec                 = [4 16];
@@ -85,6 +85,9 @@ L_vec                 = 1e6 * ones(size(EbNo_BER));
 if cfg_s.en_curva_ber
     [ber_simulada, errores_totales] = curva_ber(cfg_s, EbNo_BER, L_vec, M_vec);
 
+elseif cfg_s.en_ej_2
+    %   llama a la funcioin que reuelve el Ejercicio 2
+    ej_2(cfg_s);
 
 elseif cfg_s.en_ej_3
     % llamo a la función que resuelve el Ejercicio 3
