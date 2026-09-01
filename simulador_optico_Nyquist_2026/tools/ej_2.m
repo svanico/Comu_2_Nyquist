@@ -30,14 +30,14 @@ function ej_2(cfg)
     cfg_ej2.phase_tone_freq = 0;
 
     % Apago recuperación de portadora para aislar el efecto del canal
-    cfg_ej2.en_carrier_recovery = 0;
+    cfg_ej2.en_carrier_recovery = 1;
     cfg_ej2.phase_detector      = 0;
-    cfg_ej2.rfd_gain            = 0;
+    cfg_ej2.rfd_gain            = 1e-4;
 
     %% Valores a barrer
 
     % EbNo_BER = 8:1:15;
-      EbNo_BER = 9:0.5:14;
+      EbNo_BER = 9:1:14;
 
     L_vec    = 1e6 * ones(size(EbNo_BER));
 
@@ -100,8 +100,8 @@ function ej_2(cfg)
             ber_sim(ch_idx, idx)    = ber;
             errors_sim(ch_idx, idx) = errors;
 
-            fprintf('EbNo = %.1f dB | BER = %.3e | errores = %d | MSE = %.2f dB\n', ...
-                    cfg_temp.EbNo, ber, errors, o_rx.MSE);
+            % fprintf('EbNo = %.1f dB | BER = %.3e | errores = %d | MSE = %.2f dB\n', ...
+            %         cfg_temp.EbNo, ber, errors, o_rx.MSE);
 
         end
     end
@@ -151,52 +151,52 @@ function ej_2(cfg)
 
     %% Gráfico BER con línea horizontal
     % 
-    % figure('Name','Ejercicio 2 - BER');
-    % semilogy(EbNo_BER, ber_teorica, 'k-', ...
-    %     'LineWidth', 2, ...
-    %     'DisplayName', 'Teórica 16-QAM');
-    % hold on;
-    % 
-    % for ch_idx = 1:Nch
-    %     semilogy(EbNo_BER, ber_sim(ch_idx,:), 'o--', ...
-    %         'LineWidth', 1.3, ...
-    %         'DisplayName', ch_names{ch_idx});
-    % end
-    % 
-    % yline(BER_obj, 'k--', sprintf('BER = %.0e', BER_obj), 'LineWidth', 1.2);
-    % 
-    % 
-    % grid on;
-    % xlabel('E_b/N_0 [dB]');
-    % ylabel('BER');
-    % title('BER vs E_b/N_0 - 16-QAM');
-    % legend('Location','best');
-    % ylim([1e-5 2e-2]);
+    figure('Name','Ejercicio 2 - BER');
+    semilogy(EbNo_BER, ber_teorica, 'k-', ...
+        'LineWidth', 2, ...
+        'DisplayName', 'Teórica 16-QAM');
+    hold on;
+
+    for ch_idx = 1:Nch
+        semilogy(EbNo_BER, ber_sim(ch_idx,:), 'o--', ...
+            'LineWidth', 1.3, ...
+            'DisplayName', ch_names{ch_idx});
+    end
+
+    yline(BER_obj, 'k--', sprintf('BER = %.0e', BER_obj), 'LineWidth', 1.2);
+
+
+    grid on;
+    xlabel('E_b/N_0 [dB]');
+    ylabel('BER');
+    title('BER vs E_b/N_0 - 16-QAM');
+    legend('Location','best');
+    ylim([1e-5 2e-2]);
 
     %% Gráfico de penalidad
 
-%     figure('Name','Ejercicio 2 - Penalidad de SNR');
-% 
-%     x_cases = 1:Nch;
-% 
-%     semilogx(x_cases, penalidad_dB, '-o', ...
-%          'LineWidth', 1.8, ...
-%          'MarkerSize', 8);
-% 
-% %chequear si cambiando el ancho de banda es suficiente y queda bien
-% 
-%     grid on;
-%     xticks(x_cases);
-%     xticklabels(ch_names);
-% 
-%     xlabel('Caso de canal');
-%     ylabel('Penalidad de SNR [dB]');
-%     title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
-% 
-%     ylim([0 max(penalidad_dB)*1.2]);
+    figure('Name','Ejercicio 2 - Penalidad de SNR');
+
+    x_cases = 1:Nch;
+
+    semilogx(x_cases, penalidad_dB, '-o', ...
+         'LineWidth', 1.8, ...
+         'MarkerSize', 8);
+
+%chequear si cambiando el ancho de banda es suficiente y queda bien
+
+    grid on;
+    xticks(x_cases);
+    xticklabels(ch_names);
+
+    xlabel('Caso de canal');
+    ylabel('Penalidad de SNR [dB]');
+    title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
+
+    ylim([0 max(penalidad_dB)*1.2]);
 
 
-    %% ============================================================
+%% ============================================================
 % Comparación temporal de taps del FFE
 % =============================================================
 

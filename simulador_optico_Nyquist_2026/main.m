@@ -48,7 +48,7 @@ cfg_s.Kp              = 10e-3;      % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/500; % Ganancia integral del PLL
 cfg_s.rfd_gain        = 1e-4;       % Ganancia del detector de frecuencia
 
-cfg_s.phase_detector = 1;   % 0 = funcionamiento normal de la FSM
+cfg_s.phase_detector = 0;   % 0 = funcionamiento normal de la FSM
                             % 1 = solo detector 4th power (Ej. 3)
                             % 2 = solo detector DD (Ej. 3)
 
