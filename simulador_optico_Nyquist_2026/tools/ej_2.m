@@ -175,25 +175,25 @@ function ej_2(cfg)
 
     %% Gráfico de penalidad
 
-    figure('Name','Ejercicio 2 - Penalidad de SNR');
-    
-    x_cases = 1:Nch;
-    
-    semilogx(x_cases, penalidad_dB, '-o', ...
-         'LineWidth', 1.8, ...
-         'MarkerSize', 8);
-
-%chequear si cambiando el ancho de banda es suficiente y queda bien
-    
-    grid on;
-    xticks(x_cases);
-    xticklabels(ch_names);
-    
-    xlabel('Caso de canal');
-    ylabel('Penalidad de SNR [dB]');
-    title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
-    
-    ylim([0 max(penalidad_dB)*1.2]);
+%     figure('Name','Ejercicio 2 - Penalidad de SNR');
+% 
+%     x_cases = 1:Nch;
+% 
+%     semilogx(x_cases, penalidad_dB, '-o', ...
+%          'LineWidth', 1.8, ...
+%          'MarkerSize', 8);
+% 
+% %chequear si cambiando el ancho de banda es suficiente y queda bien
+% 
+%     grid on;
+%     xticks(x_cases);
+%     xticklabels(ch_names);
+% 
+%     xlabel('Caso de canal');
+%     ylabel('Penalidad de SNR [dB]');
+%     title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
+% 
+%     ylim([0 max(penalidad_dB)*1.2]);
 
 
     %% ============================================================
@@ -201,84 +201,123 @@ function ej_2(cfg)
 % =============================================================
 
 % Uso un EbNo fijo para comparar la respuesta final del ecualizador
-% EbNo_taps = cfg_ej2.EbNo;
-% 
-% htaps_mat = zeros(cfg_ej2.NTAPS_ffe, Nch);
-% 
-% for ch_idx = 1:Nch
-% 
-%     cfg_temp = cfg_ej2;
-% 
-%     cfg_temp.EbNo   = EbNo_taps;
-%     cfg_temp.Lsymbs = cfg_ej2.Lsymbs;
-% 
-%     % Actualizo timers porque dependen de Lsymbs
-%     cfg_temp.t1_rfd    = fix(cfg_temp.t1_rfd_frac    * cfg_temp.Lsymbs);
-%     cfg_temp.t2_fcr_v4 = fix(cfg_temp.t2_fcr_v4_frac * cfg_temp.Lsymbs);
-%     cfg_temp.t3_fcr_dd = fix(cfg_temp.t3_fcr_dd_frac * cfg_temp.Lsymbs);
-%     cfg_temp.t4_ffe_dd = fix(cfg_temp.t4_ffe_dd_frac * cfg_temp.Lsymbs);
-% 
-%     % Configuración del canal
-%     if ch_idx == 1
-%         cfg_temp.en_ch_filter = 0;      % Canal impulso
-%     else
-%         cfg_temp.en_ch_filter = 1;
-%         cfg_temp.ch_bw = ch_bw_vec(ch_idx);
-%     end
-% 
-%     rng(1);
-% 
-%     % Transmisor
-%     o_tx_s = transmisor_QAM(cfg_temp);
-% 
-%     % Canal
-%     o_canal = channel(o_tx_s.o_tx, cfg_temp);
-% 
-%     % Receptor
-%     o_rx = Receiver(o_canal, cfg_temp, o_tx_s.ak);
-% 
-%     % Guardo taps finales
-%     htaps_mat(:, ch_idx) = o_rx.htaps(:);
-% 
-% end
+EbNo_taps = cfg_ej2.EbNo;
+
+htaps_mat = zeros(cfg_ej2.NTAPS_ffe, Nch);
+
+for ch_idx = 1:Nch
+
+    cfg_temp = cfg_ej2;
+
+    cfg_temp.EbNo   = EbNo_taps;
+    cfg_temp.Lsymbs = cfg_ej2.Lsymbs;
+
+    % Actualizo timers porque dependen de Lsymbs
+    cfg_temp.t1_rfd    = fix(cfg_temp.t1_rfd_frac    * cfg_temp.Lsymbs);
+    cfg_temp.t2_fcr_v4 = fix(cfg_temp.t2_fcr_v4_frac * cfg_temp.Lsymbs);
+    cfg_temp.t3_fcr_dd = fix(cfg_temp.t3_fcr_dd_frac * cfg_temp.Lsymbs);
+    cfg_temp.t4_ffe_dd = fix(cfg_temp.t4_ffe_dd_frac * cfg_temp.Lsymbs);
+
+    % Configuración del canal
+    if ch_idx == 1
+        cfg_temp.en_ch_filter = 0;      % Canal impulso
+    else
+        cfg_temp.en_ch_filter = 1;
+        cfg_temp.ch_bw = ch_bw_vec(ch_idx);
+    end
+
+    rng(1);
+
+    % Transmisor
+    o_tx_s = transmisor_QAM(cfg_temp);
+
+    % Canal
+    o_canal = channel(o_tx_s.o_tx, cfg_temp);
+
+    % Receptor
+    o_rx = Receiver(o_canal, cfg_temp, o_tx_s.ak);
+
+    % Guardo taps finales
+    htaps_mat(:, ch_idx) = o_rx.htaps(:);
+
+end
 
 %% Figura comparativa de taps en tiempo
 
-% tap_axis = 1:cfg_ej2.NTAPS_ffe;
-% 
-% figure('Name','Ejercicio 2 - Taps FFE real e imaginario');
-% 
-% subplot(2,1,1);
-% hold on;
-% 
-% for ch_idx = 1:Nch
-%     plot(tap_axis, real(htaps_mat(:,ch_idx)), '-o', ...
-%          'LineWidth', 1.3, ...
-%          'MarkerSize', 4, ...
-%          'DisplayName', ch_names{ch_idx});
-% end
-% 
-% grid on;
-% xlabel('Índice de tap');
-% ylabel('Parte real');
-% title(sprintf('Parte real de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
-% legend('Location','best');
-% 
-% subplot(2,1,2);
-% hold on;
-% 
-% for ch_idx = 1:Nch
-%     plot(tap_axis, imag(htaps_mat(:,ch_idx)), '-o', ...
-%          'LineWidth', 1.3, ...
-%          'MarkerSize', 4, ...
-%          'DisplayName', ch_names{ch_idx});
-% end
-% 
-% grid on;
-% xlabel('Índice de tap');
-% ylabel('Parte imaginaria');
-% title(sprintf('Parte imaginaria de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
-% legend('Location','best');
+tap_axis = 1:cfg_ej2.NTAPS_ffe;
+
+figure('Name','Ejercicio 2 - Taps FFE real e imaginario');
+
+subplot(2,1,1);
+hold on;
+
+for ch_idx = 1:Nch
+    plot(tap_axis, real(htaps_mat(:,ch_idx)), '-o', ...
+         'LineWidth', 1.3, ...
+         'MarkerSize', 4, ...
+         'DisplayName', ch_names{ch_idx});
+end
+
+grid on;
+xlabel('Índice de tap');
+ylabel('Parte real');
+title(sprintf('Parte real de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
+legend('Location','best');
+
+subplot(2,1,2);
+hold on;
+
+for ch_idx = 1:Nch
+    plot(tap_axis, imag(htaps_mat(:,ch_idx)), '-o', ...
+         'LineWidth', 1.3, ...
+         'MarkerSize', 4, ...
+         'DisplayName', ch_names{ch_idx});
+end
+
+grid on;
+xlabel('Índice de tap');
+ylabel('Parte imaginaria');
+title(sprintf('Parte imaginaria de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
+legend('Location','best');
+
+
+%% ============================================================
+% Respuesta en frecuencia del FFE normalizada en DC
+% =============================================================
+
+NFFT = 4096;
+Fs_ffe = cfg_ej2.BR * cfg_ej2.OVS.DSP;   % frecuencia de muestreo del FFE
+f = (0:NFFT/2-1) * Fs_ffe/NFFT;          % eje frecuencia positiva
+
+figure('Name','Ejercicio 2 - Respuesta en frecuencia FFE normalizada');
+
+hold on;
+
+for ch_idx = 1:Nch
+
+    Hffe = fft(htaps_mat(:,ch_idx), NFFT);
+    Hffe_pos = Hffe(1:NFFT/2);
+
+    % Normalización en DC
+    Hffe_norm = Hffe_pos ./ (abs(Hffe_pos(1)) + eps);
+
+    Hffe_dB = 20*log10(abs(Hffe_norm) + 1e-12);
+
+    plot(f/1e9, Hffe_dB, ...
+         'LineWidth', 1.5, ...
+         'DisplayName', ch_names{ch_idx});
+
+end
+
+grid on;
+xlabel('Frecuencia [GHz]');
+ylabel('|H_{FFE}(f)| normalizada en DC [dB]');
+title('Respuesta en frecuencia final del FFE');
+
+xlim([0 Fs_ffe/2/1e9]);     % 0 a 32 GHz para OVS.DSP = 2
+ylim([-30 10]);             % ajustable según cómo quede
+legend('Location','best');
+
 
 
     %% Guardar resultados
