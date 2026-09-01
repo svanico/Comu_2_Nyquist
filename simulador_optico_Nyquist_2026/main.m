@@ -5,7 +5,7 @@ cfg_s = struct();
 cfg_s.BR              = 32e9;       % Baud rate 
 cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
-cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
+cfg_s.rolloff         = 0.3;        % Exceso de ancho de banda
 cfg_s.EbNo            = 16;         % Valor de EbNo para los graficos temporales/debugging
 
 % Sobremuestreo
@@ -25,8 +25,8 @@ cfg_s.ch_bw           = 17.75e9;    % Ancho de banda del canal (leve)
 %% 3. Errores de portadora
 cfg_s.en_c_error      = 1;          % Habilita errores de portadora 
 % Errores Estáticos 
-cfg_s.delta_freq      = 0e6;       % Offset del LO
-cfg_s.phase_offset    = 30/180*pi;  % Error de fase
+cfg_s.delta_freq      = 10e6;       % Offset del LO
+cfg_s.phase_offset    = 0/180*pi;  % Error de fase
 cfg_s.LW              = 0e3;        % Ancho de linea [Hz] -> Ruido de fase
 % Fluctuaciones
 cfg_s.freq_fluct_amp  = 0;
@@ -44,7 +44,7 @@ cfg_s.leak            = 1e-7;       % Factor de pérdida (leakage)
 % Parámetros del PLL y RFD
 cfg_s.Kp              = 1e-3;       % Ganancia proporcional del PLL
 cfg_s.Ki              = cfg_s.Kp/1000; % Ganancia integral del PLL
-cfg_s.rfd_gain        = 1e-4;       % Ganancia del detector de frecuencia
+cfg_s.rfd_gain        = 1e-5;       % Ganancia del detector de frecuencia
 
 % Timers (FSM RX)
 cfg_s.t1_rfd_frac    = 0.2;
@@ -66,7 +66,7 @@ cfg_s.en_plots_tx     = 0;
 cfg_s.en_plots_rx     = 1;            % Habilita métricas internas del receptor
 cfg_s.debug_psd       = 0;            % Grafica Densidad Espectral de Potencia (PSD)
 cfg_s.debug_eye       = 0;            % Grafica Diagrama de Ojo
-cfg_s.debug_const     = 1;            % Grafica Constelación
+cfg_s.debug_const     = 0;            % Grafica Constelación
 cfg_s.debug_Nsymbs    = cfg_s.Lsymbs; % Cantidad de simbolos para graficar
 
 % Vectores para Curva BER (Si en_curva_ber = 1)
