@@ -54,12 +54,12 @@ function ej_2(cfg)
 
     for ch_idx = 1:Nch
 
-        fprintf('\n=====================================\n');
-        fprintf('Canal: %s\n', ch_names{ch_idx});
-        fprintf('=====================================\n');
+        % fprintf('\n=====================================\n');
+        % fprintf('Canal: %s\n', ch_names{ch_idx});
+        % fprintf('=====================================\n');
 
         for idx = 1:Ne
-
+ 
             cfg_temp = cfg_ej2;
 
             cfg_temp.EbNo   = EbNo_BER(idx);
@@ -149,51 +149,51 @@ function ej_2(cfg)
     %             penalidad_dB(ch_idx));
     % end
 
-    %% Gráfico BER con línea horizontal
-    % 
-    figure('Name','Ejercicio 2 - BER');
-    semilogy(EbNo_BER, ber_teorica, 'k-', ...
-        'LineWidth', 2, ...
-        'DisplayName', 'Teórica 16-QAM');
-    hold on;
-
-    for ch_idx = 1:Nch
-        semilogy(EbNo_BER, ber_sim(ch_idx,:), 'o--', ...
-            'LineWidth', 1.3, ...
-            'DisplayName', ch_names{ch_idx});
-    end
-
-    yline(BER_obj, 'k--', sprintf('BER = %.0e', BER_obj), 'LineWidth', 1.2);
-
-
-    grid on;
-    xlabel('E_b/N_0 [dB]');
-    ylabel('BER');
-    title('BER vs E_b/N_0 - 16-QAM');
-    legend('Location','best');
-    ylim([1e-5 2e-2]);
-
-    %% Gráfico de penalidad
-
-    figure('Name','Ejercicio 2 - Penalidad de SNR');
-
-    x_cases = 1:Nch;
-
-    semilogx(x_cases, penalidad_dB, '-o', ...
-         'LineWidth', 1.8, ...
-         'MarkerSize', 8);
-
-%chequear si cambiando el ancho de banda es suficiente y queda bien
-
-    grid on;
-    xticks(x_cases);
-    xticklabels(ch_names);
-
-    xlabel('Caso de canal');
-    ylabel('Penalidad de SNR [dB]');
-    title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
-
-    ylim([0 max(penalidad_dB)*1.2]);
+%     %% Gráfico BER con línea horizontal
+%     % 
+%     figure('Name','Ejercicio 2 - BER');
+%     semilogy(EbNo_BER, ber_teorica, 'k-', ...
+%         'LineWidth', 2, ...
+%         'DisplayName', 'Teórica 16-QAM');
+%     hold on;
+% 
+%     for ch_idx = 1:Nch
+%         semilogy(EbNo_BER, ber_sim(ch_idx,:), 'o--', ...
+%             'LineWidth', 1.3, ...
+%             'DisplayName', ch_names{ch_idx});
+%     end
+% 
+%     yline(BER_obj, 'k--', sprintf('BER = %.0e', BER_obj), 'LineWidth', 1.2);
+% 
+% 
+%     grid on;
+%     xlabel('E_b/N_0 [dB]');
+%     ylabel('BER');
+%     title('BER vs E_b/N_0 - 16-QAM');
+%     legend('Location','best');
+%     ylim([1e-5 2e-2]);
+% 
+%     %% Gráfico de penalidad
+% 
+%     figure('Name','Ejercicio 2 - Penalidad de SNR');
+% 
+%     x_cases = 1:Nch;
+% 
+%     semilogx(x_cases, penalidad_dB, '-o', ...
+%          'LineWidth', 1.8, ...
+%          'MarkerSize', 8);
+% 
+% %chequear si cambiando el ancho de banda es suficiente y queda bien
+% 
+%     grid on;
+%     xticks(x_cases);
+%     xticklabels(ch_names);
+% 
+%     xlabel('Caso de canal');
+%     ylabel('Penalidad de SNR [dB]');
+%     title(sprintf('Penalidad de SNR a BER = %.0e', BER_obj));
+% 
+%     ylim([0 max(penalidad_dB)*1.2]);
 
 
 %% ============================================================
@@ -261,8 +261,9 @@ end
 grid on;
 xlabel('Índice de tap');
 ylabel('Parte real');
-title(sprintf('Parte real de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
+title(sprintf('Parte real de los taps del FFE'));
 legend('Location','best');
+xlim([0 52]);    
 
 subplot(2,1,2);
 hold on;
@@ -277,8 +278,9 @@ end
 grid on;
 xlabel('Índice de tap');
 ylabel('Parte imaginaria');
-title(sprintf('Parte imaginaria de los taps del FFE - EbNo = %.1f dB', EbNo_taps));
+title(sprintf('Parte imaginaria de los taps del FFE'));
 legend('Location','best');
+xlim([0 52]);    
 
 
 %% ============================================================
@@ -311,11 +313,11 @@ end
 
 grid on;
 xlabel('Frecuencia [GHz]');
-ylabel('|H_{FFE}(f)| normalizada en DC [dB]');
+ylabel('|H_{FFE}(f)| normalizada [dB]');
 title('Respuesta en frecuencia final del FFE');
 
 xlim([0 Fs_ffe/2/1e9]);     % 0 a 32 GHz para OVS.DSP = 2
-ylim([-30 10]);             % ajustable según cómo quede
+ylim([-40 10]);             % ajustable según cómo quede
 legend('Location','best');
 
 
