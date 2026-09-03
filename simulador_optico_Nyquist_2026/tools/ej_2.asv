@@ -312,7 +312,7 @@ ylabel('|H_{FFE}(f)| normalizada [dB]');
 title('Respuesta en frecuencia final del FFE');
 
 xlim([0 32]);     % 0 a 32 GHz para OVS.DSP = 2
-ylim([-30 4]);             % ajustable según cómo quede
+ylim([-25 5]);             % ajustable según cómo quede
 legend('Location','best');
 
 

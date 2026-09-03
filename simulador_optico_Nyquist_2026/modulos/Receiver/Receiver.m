@@ -13,8 +13,8 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     
     % R_CMA = cfg_s.R_CMA;
     % R_CMA = sqrt(mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
-    R_CMA = (mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
-    R_CMA = 13.2;
+    % R_CMA = (mean(abs(ak(1:1000)).^4)/mean(abs(ak(1:1000)).^2));
+    R_CMA = 13.2;       %este para 16 QAM
     dd_step = i_cfg_s.dd_step;
     cma_step = i_cfg_s.cma_step;
     leak = i_cfg_s.leak;
@@ -57,7 +57,7 @@ function [o_data_rx] = Receiver(i_rx, i_cfg_s, ak)
     %% EQ y FCR
     %Inicializacion de matrices y variables
     htaps = zeros(NTAPS_ffe,1);
-    htaps(floor(NTAPS_ffe/2)-1) = 1; %Impulso
+    htaps(floor(NTAPS_ffe/2)+1) = 1; %Impulso
     buffer_filter = zeros(NTAPS_ffe,1); %BUFFER para la señal recibida
     phase_integral = 0;
     phase_acc = 0; % Equivale al nco_output

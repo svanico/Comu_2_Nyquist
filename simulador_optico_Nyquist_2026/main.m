@@ -6,7 +6,7 @@ cfg_s.BR              = 32e9;       % Baud rate
 cfg_s.M               = 16;         % Orden de modulacion
 cfg_s.Lsymbs          = 1e6;        % Cantidad de simbolos
 cfg_s.rolloff         = 0.6;        % Exceso de ancho de banda
-cfg_s.EbNo            = 16;         % Valor de EbNo para los graficos temporales/debugging
+cfg_s.EbNo            = 11;         % Valor de EbNo para los graficos temporales/debugging
 
 % Sobremuestreo
 cfg_s.OVS.CH          = 4;          % Sobremuestreo del transmisor/canal
@@ -20,7 +20,7 @@ cfg_s.en_n            = 1;          % Habilita AWGN
 cfg_s.pos_n           = 0;          % 1:ruido coloreado, 0:blanco
 cfg_s.NTAPS_FIR       = 51;         % Coeficientes del canal
 % cfg_s.ch_bw           = 17.75e9;    % Ancho de banda del canal (leve)
-cfg_s.ch_bw           = 16e9;    % Ancho de banda del canal (moderada)
+cfg_s.ch_bw           = 19e9;    % Ancho de banda del canal (moderada)
 % cfg_s.ch_bw           = 15.5e9;    % Ancho de banda del canal (agresiva)
 
 
