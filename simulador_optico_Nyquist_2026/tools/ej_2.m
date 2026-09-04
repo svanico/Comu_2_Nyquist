@@ -6,6 +6,10 @@ function ej_2(cfg)
     % Copiamos configuracion del main
     cfg_ej2 = cfg;
 
+    set(groot, 'defaultTextInterpreter', 'latex');
+    set(groot, 'defaultAxesTickLabelInterpreter', 'latex');
+    set(groot, 'defaultLegendInterpreter', 'latex');
+
     %% Cambios propios del Ejercicio 2
     cfg_ej2.M               = 16;
     cfg_ej2.rolloff         = 0.6;
@@ -46,6 +50,13 @@ function ej_2(cfg)
     ch_bw_vec = [0 22.5e9 20e9 18.5e9];
 
     ch_names  = {'Impulso', 'Leve', 'Moderada', 'Agresiva'};
+
+    % fig_dir = 'C:/Users/nicol/OneDrive/Escritorio/correcionestp1';
+    fig_dir = 'C:/Users/nicol/OneDrive/Escritorio/correccionestp1/ee/2';
+
+    if ~exist(fig_dir, 'dir')
+        mkdir(fig_dir);
+    end
 
     Nch = length(ch_bw_vec);
     Ne  = length(EbNo_BER);
@@ -164,11 +175,15 @@ function ej_2(cfg)
     'HandleVisibility','off');
 
     grid on;
-    xlabel('E_b/N_0 [dB]');
+    xlabel('$E_b/N_0$ [dB]');
     ylabel('BER');
-    title('BER vs E_b/N_0 - 16-QAM');
+    title('BER vs $E_b/N_0$ - 16-QAM');
     legend('Location','best');
     ylim([1e-5 1e-2]);
+
+
+  guardar_svg(gcf, fig_dir, 'ej2_ber_vs_ebno');
+
 
     %% Gráfico de penalidad
 
@@ -191,6 +206,9 @@ function ej_2(cfg)
 
     ylim([0 max(penalidad_dB)*1.2]);
 
+
+
+guardar_svg(gcf, fig_dir, 'ej2_penalidad');
 
 % %% ============================================================
 % % Comparación temporal de taps del FFE
@@ -277,6 +295,8 @@ title(sprintf('Parte imaginaria de los taps del FFE'));
 legend('Location','best');
 xlim([0 52]);    
 
+guardar_svg(gcf, fig_dir, 'ej2_taps_ffe');
+
 
 %% ============================================================
 % Respuesta en frecuencia del FFE normalizada en DC
@@ -308,7 +328,7 @@ end
 
 grid on;
 xlabel('Frecuencia [GHz]');
-ylabel('|H_{FFE}(f)| normalizada [dB]');
+ylabel('$|H_{FFE}(f)|$ normalizada [dB]');
 title('Respuesta en frecuencia final del FFE');
 
 xlim([0 32]);     % 0 a 32 GHz para OVS.DSP = 2
@@ -316,6 +336,7 @@ ylim([-30 4]);             % ajustable según cómo quede
 legend('Location','best');
 
 
+guardar_svg(gcf, fig_dir, 'ej2_freq_ffe');
 
 
 
@@ -412,14 +433,14 @@ for idx_ne = 1:length(EbNo_NE_vec)
 
     plot(f_NE/1e9, H_NE_dB(:,idx_ne), ...
         'LineWidth', 1.5, ...
-        'DisplayName', sprintf('Agresivo - E_b/N_0 = %.0f dB', EbNo_NE_vec(idx_ne)));
+        'DisplayName', sprintf('Agresivo - $E_b/N_0 = %.0f$ dB', EbNo_NE_vec(idx_ne)));
 
 end
 
 grid on;
 
 xlabel('Frecuencia [GHz]');
-ylabel('|H_{FFE}(f)| [dB]');
+ylabel('$|H_{FFE}(f)|$ [dB]');
 title('Noise enhancement ');
 
 legend('Location','best');
@@ -430,8 +451,7 @@ ylim([-2 3]);
 
 
 
-
-
+guardar_svg(gcf, fig_dir, 'ej2_noise_enh');
 
 
 
@@ -479,5 +499,16 @@ function EbNo_cross = find_ebno_at_ber(EbNo_vec, ber_vec, BER_obj)
 
 
 
+
+end
+
+
+
+function guardar_svg(fig, fig_dir, nombre)
+
+    set(fig, 'Color', 'w');
+    set(fig, 'Renderer', 'painters');
+
+    saveas(fig, fullfile(fig_dir, [nombre '.svg']));
 
 end
